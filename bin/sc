@@ -1,0 +1,105 @@
+#!/bin/sh
+
+_appdir=`dirname $0`
+TOP=`cd $_appdir/.. && pwd`
+_conf="$1"
+
+. $TOP/lib/common.sh
+. $TOP/lib/carp.sh
+. $TOP/lib/hosts.sh
+. $TOP/lib/consul.sh
+. $TOP/lib/fs.sh
+. $TOP/lib/nomad.sh
+. $TOP/lib/pot.sh
+. $TOP/lib/traefik.sh
+
+. $TOP/conf/default.conf
+
+load_conf() {
+    local _conf
+
+    _conf="$1"
+    test ! -z "$_conf" && \
+	test -f $_conf && \
+	. $_conf
+}
+
+apply() {
+    local _role _all_hosts _s
+
+    parse_opts apply "$@"
+    if [ $? != 0 ]; then
+	usage sc
+	exit 1
+    fi
+
+    echo "Using conf $CONF netif $NETIF "
+    load_conf "$CONF"
+
+    _all_hosts=`get_all_hosts`
+    if ! name_in_list `hostname` $_all_hosts; then
+	_role=none
+    elif is_server; then
+	_role=server
+    else
+	_role=client
+    fi
+
+    for _s in hosts fs carp consul nomad pot traefik; do
+	if fn_defined "${_s}_apply"; then
+	    eval "${_s}_apply $_role"
+	    if [ $? != 0 ]; then
+		echo "${_s}_apply $_role failed"
+		exit 2
+	    fi
+	fi
+    done
+
+    echo "Host apply $_role success. "
+    echo "Please reboot the system"
+}
+
+run_test() {
+    local _tst
+
+    _tst="$TOP/testsuite/$1.sh"
+    if [ -f "$_tst" ]; then
+	. $_tst
+	if fn_defined run_case ; then
+	    run_case "$1"
+	else
+	    echo "no test entry function: run_case has been defined"
+	    exit 2
+	fi
+    else
+	echo "test case: $1($_tst) can not be found"
+	exit 1
+    fi
+}
+
+usage() {
+    echo "usage: $1"
+    echo "      $1 apply [ -c config ] [ -i netif ] [ -n ]"
+    echo "      $1 test <testcase> (in testsuite directory)"
+    echo "      usage (show this help)"
+    echo
+    echo "      1. config is the configuration file. see examples/conf/cluster.conf"
+    echo "      2. netif is the network interface(default is em0)"
+    echo "      3. -n turn on dry run mode(Just show what works which will be done)"
+    return 1
+}
+
+action="$1"
+shift
+
+case $action in
+    apply)
+	apply "$@"
+	;;
+    test)
+	run_test "$@"
+	;;
+    *)
+	usage sc
+	;;
+esac
