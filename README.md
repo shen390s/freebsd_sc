@@ -3,7 +3,7 @@ FreeBSD Service cluster tool
 
 This is a tool to build a freebsd service cluster
 
-== Basic Idea
+* Basic Idea
 
 1. Use consul as service discovery
 
@@ -15,7 +15,7 @@ This is a tool to build a freebsd service cluster
 
 5. Use FreeBSD jail management tool(pot) to manage service jail
 
-== Usage
+* Usage
 
 1. get help
 ```sh
@@ -56,9 +56,9 @@ See examples/jobs for detail
 
 6. configure DNS service to resolve service domain to CARP address
 
-*.<data center>.<your domain>
+   data_center.your_domain
 
-== Others
+* Others
 
 create pull request if you found any issue.
 
