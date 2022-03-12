@@ -79,9 +79,9 @@ file_newer() {
     _mt2=`file_modify_time "$2"`
 
     if [ $_mt1 -gt $_mt2 ]; then
-	true
+	echo yes
     else
-	false
+	echo no
     fi
 }
 
@@ -356,22 +356,28 @@ update_host_entry() {
 }
 
 update_hosts() {
-    local _host _ip _item _cmd
+    local _host _ip _item _cmd_pre _cmd _sep
 
-    _cmd="cp /etc/hosts /etc/hosts.old && cat /etc/hosts.old"
+    _cmd_pre="touch /etc/hosts && cp /etc/hosts /etc/hosts.old && cat /etc/hosts.old"
+    _cmd=""
+    _sep=""
     for _item in $*; do
 	_host=`echo $_item |awk -F: '{print $1}'`
 	_ip=`echo $_item | awk -F: '{print $2}'`
-	_cmd="$_cmd | update_host_entry $_host $_ip"
+	_cmd="$_cmd $_sep update_host_entry $_host $_ip"
+	_sep=" | "
     done
 
     if [ ! -z "$_cmd" ]; then
-	run_cmd mv /etc/hosts /etc/hosts.1
-	save_output /etc/hosts eval "$_cmd"
+	if [ -f /etc/hosts ]; then
+	    run_cmd mv /etc/hosts /etc/hosts.1
+	fi
+	
+	save_output /etc/hosts eval "$_cmd_pre | $_cmd"
 	if [ -f /etc/hosts ]; then
 	    run_cmd rm -Rf /etc/hosts.1
 	else
-	    run_cmd /etc/hosts.1 /etc/hosts
+	    run_cmd cp /etc/hosts.1 /etc/hosts
 	fi
     fi
 

@@ -25,36 +25,44 @@ consul_cleanup() {
     run_cmd rm -Rf /var/db/consul
 }
 
-config_consul_client() {
-    local _bind_addr _server_hosts _c1 _c2
+consul_need_update() {
+    local _c1 _c2 _c3
 
     _c1=/usr/local/etc/sc/sc.conf
     _c2=/usr/local/etc/consul.d/consul.hcl
+    _c3=/usr/local/etc/consul.d/server.hcl
 
-    if [ ! -f $_c2 -o `file_newer $_c1 $_c2` ]; then
-	_bind_addr=`consul_bind_ip $NETIF`
-	_server_hosts=`shape_server_hosts`
-	_DATACENTER="$DATACENTER"
-	_BIND_ADDR="$_bind_addr"
-	_SERVERS="$_server_hosts"
-	render_to /usr/local/etc/consul.d/consul.hcl \
-		  $TOP/share/sc/templates/consul.hcl.template 
-	touch /var/run/.sc.consul.updated
+    if [ ! -f $_c2 ]; then
+	:
+    elif [ ! -f $_c3 ]; then
+	:
+    elif [ "X`file_newer $_c1 $_c2`" = "Xyes" ]; then
+	:
+    elif [ "X`file_newer $_c1 $_c3`" = "Xyes" ]; then
+	:
+    else
+	false
     fi
 }
 
+config_consul_client() {
+    local _bind_addr _server_hosts 
+
+    _bind_addr=`consul_bind_ip $NETIF`
+    _server_hosts=`shape_server_hosts`
+    _DATACENTER="$DATACENTER"
+    _BIND_ADDR="$_bind_addr"
+    _SERVERS="$_server_hosts"
+    render_to /usr/local/etc/consul.d/consul.hcl \
+	      $TOP/share/sc/templates/consul.hcl.template 
+    touch /var/run/.sc.consul.updated
+}
+
 config_consul_srv() {
-    local _c1 _c2
-
-    _c1=/usr/local/etc/sc/sc.conf
-    _c2=/usr/local/etc/consul.d/server.hcl
-
-    if [ ! -f $_c2 -o `file_newer $_c1 $_c2` ]; then
-	_VOTE_COUNT=`get_voted_server_count`
-	render_to /usr/local/etc/consul.d/server.hcl \
-		  $TOP/share/sc/templates/consul-server.hcl.template 
-	touch /var/run/.sc.consul.updated
-    fi
+    _VOTE_COUNT=`get_voted_server_count`
+    render_to /usr/local/etc/consul.d/server.hcl \
+	      $TOP/share/sc/templates/consul-server.hcl.template 
+    touch /var/run/.sc.consul.updated
 }
 
 config_consul() {
@@ -100,14 +108,16 @@ consul_apply_none() {
 }
 
 consul_apply() {
-    case "$1" in
-	client|server)
-	    consul_apply_sc "$1"
-	    ;;
-	*)
-	    consul_apply_none
-	    ;;
-    esac
+    if consul_need_update ; then
+	case "$1" in
+	    client|server)
+		consul_apply_sc "$1"
+		;;
+	    *)
+		consul_apply_none
+		;;
+	esac
+    fi
 }
 
 consul_start() {

@@ -1,5 +1,12 @@
 . $TOP/share/sc/scripts/common.sh
 
+dir_mounted() {
+    local _dir
+
+    _dir="$1"
+    mount | eval "awk '{ if ( \$3 == \"$_dir\") { print \"yes\" }}'" |grep yes 2>&1 >/dev/null
+}
+
 fs_mount() {
     local _item _fs _mp
 
@@ -16,7 +23,11 @@ fs_mount() {
 	    run_cmd mkdir -p $_mp
 	fi
 	
-	run_cmd mount -t nfs $_fs $_mp
+	if dir_mounted "$_mp"; then
+	    :
+	else
+	    run_cmd mount -t nfs $_fs $_mp
+	fi
     done
 }
 fs_start() {

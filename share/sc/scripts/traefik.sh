@@ -11,19 +11,24 @@ traefik_stop() {
     esac
 }
 
-mk_traefik_config() {
+traefik_need_update() {
     local _c1 _c2
 
     _c1=/usr/local/etc/sc/sc.conf
     _c2=/usr/local/etc/traefik.toml
 
-    if [ ! -f $_c2 -o `file_newer $_c1 $_c2` ]; then
-	_DATACENTER="$DATACENTER"
-	_DOMAIN="$DOMAIN"
-	render_to /usr/local/etc/traefik.toml \
-		  $TOP/share/sc/templates/traefik.toml.template
-	touch /var/run/.sc.traefik.updated
+    if [ ! -f $_c2 -o "X`file_newer $_c1 $_c2`" = "Xyes" ]; then
+	:
+    else
+	false
     fi
+}
+mk_traefik_config() {
+    _DATACENTER="$DATACENTER"
+    _DOMAIN="$DOMAIN"
+    render_to /usr/local/etc/traefik.toml \
+	      $TOP/share/sc/templates/traefik.toml.template
+    touch /var/run/.sc.traefik.updated
 }
 
 config_traefik() {
@@ -62,12 +67,14 @@ traefik_apply_none() {
 }
 
 traefik_apply() {
-    case "$1" in
-	server)
-	    traefik_apply_server
-	    ;;
-	*)
-	    traefik_apply_none
-	    ;;
-    esac
+    if traefik_need_update ; then
+	case "$1" in
+	    server)
+		traefik_apply_server
+		;;
+	    *)
+		traefik_apply_none
+		;;
+	esac
+    fi
 }

@@ -154,7 +154,7 @@ start() {
 
     _role=`get_role`
 
-    for _s in hosts fs consul nomad traefik pot; do
+    for _s in hosts carp fs consul nomad traefik pot; do
 	if fn_defined "${_s}_start"; then
 	    eval "${_s}_start $_role"
 	fi

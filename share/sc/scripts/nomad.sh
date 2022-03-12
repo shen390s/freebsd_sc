@@ -4,55 +4,66 @@ nomad_stop() {
     run_cmd service nomad stop
 }
 
-mk_nomad_client_config() {
-    local _servers _s _sep _c1 _c2
+nomad_need_update() {
+    local _c1 _c2 _c3
 
     _c1=/usr/local/etc/sc/sc.conf
     _c2=/usr/local/etc/nomad/client.hcl
+    _c3=/usr/local/etc/nomad/server.hcl
 
-    if [ ! -f $_c2 -o `file_newer $_c1 $_c2` ]; then
-	if is_server; then
-	    _servers="\"127.0.0.1:4647\""
-	else
-	    _servers=""
-	    _sep=""
-	    for _s in `get_server_list`; do
-		_servers="$_servers $_sep \"$_s:4647\""
-		_sep=','
-	    done
-	fi
-
-	_DATACENTER="$DATACENTER"
-	_SERVERS="$_servers"
-	render_to /usr/local/etc/nomad/client.hcl \
-		  $TOP/share/sc/templates/nomad-client.hcl.template 
-
-	touch /var/run/.sc.nomad.updated
+    if [ ! -f $_c2 ]; then
+	:
+    elif [ ! -f $_c3 ]; then
+	:
+    elif [ "X`file_newer $_c1 $_c2`" = "Xyes" ]; then
+	:
+    elif [ "X`file_newer $_c1 $_c3`" = "Xyes" ]; then
+	:
+    else
+	false
     fi
 }
 
-mk_nomad_srv_config() {
-    local _bind_ip _vars _c1 _c2
 
-    _c1=/usr/local/etc/sc/sc.conf
-    _c2=/usr/local/etc/nomad/server.hcl
+mk_nomad_client_config() {
+    local _servers _s _sep 
 
-    if [ ! -f $_c2 -o `file_newer $_c1 $_c2` ]; then
-	_bind_ip=`get_bind_ip $NETIF`
-
-	if is_server; then
-	    _BIND_ADDR="$_bind_ip"
-	    _VOTE_COUNT=`get_voted_server_count`
-	    render_to /usr/local/etc/nomad/server.hcl \
-		      $TOP/share/sc/templates/nomad-server.hcl.template 
-	else
-	    run_cmd rm -Rf /usr/local/etc/nomad/server.hcl
-	    save_output /usr/local/etc/nomad/server.hcl \
-			echo server { enabled = false } 
-	    #printf 'server {\n\tenabled = false\n}\n'
-	fi
-	touch /var/run/.sc.nomad.updated
+    if is_server; then
+	_servers="\"127.0.0.1:4647\""
+    else
+	_servers=""
+	_sep=""
+	for _s in `get_server_list`; do
+	    _servers="$_servers $_sep \"$_s:4647\""
+	    _sep=','
+	done
     fi
+
+    _DATACENTER="$DATACENTER"
+    _SERVERS="$_servers"
+    render_to /usr/local/etc/nomad/client.hcl \
+	      $TOP/share/sc/templates/nomad-client.hcl.template 
+
+    touch /var/run/.sc.nomad.updated
+}
+
+mk_nomad_srv_config() {
+    local _bind_ip _vars 
+
+    _bind_ip=`get_bind_ip $NETIF`
+
+    if is_server; then
+	_BIND_ADDR="$_bind_ip"
+	_VOTE_COUNT=`get_voted_server_count`
+	render_to /usr/local/etc/nomad/server.hcl \
+		  $TOP/share/sc/templates/nomad-server.hcl.template 
+    else
+	run_cmd rm -Rf /usr/local/etc/nomad/server.hcl
+	save_output /usr/local/etc/nomad/server.hcl \
+		    echo server { enabled = false } 
+	#printf 'server {\n\tenabled = false\n}\n'
+    fi
+    touch /var/run/.sc.nomad.updated
 }
 
 config_nomad_client() {
@@ -115,14 +126,16 @@ nomad_apply_none() {
 }
 
 nomad_apply() {
-    case "$1" in
-	server|client)
-	    nomad_apply_sc "$1"
-	    ;;
-	*)
-	    nomad_apply_none
-	    ;;
-    esac
+    if nomad_need_update ; then
+	case "$1" in
+	    server|client)
+		nomad_apply_sc "$1"
+		;;
+	    *)
+		nomad_apply_none
+		;;
+	esac
+    fi
 }
 
 nomad_start() {
