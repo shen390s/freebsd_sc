@@ -20,3 +20,6 @@ pot_apply() {
     esac
 }
 
+pot_start() {
+    pot vnet-start
+}

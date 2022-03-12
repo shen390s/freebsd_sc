@@ -161,7 +161,7 @@ save_output() {
 	echo
 	eval "$@"
     else
-	eval "$@ > $_to"
+	eval "$@ >> $_to"
     fi
 }
 
@@ -366,7 +366,13 @@ update_hosts() {
     done
 
     if [ ! -z "$_cmd" ]; then
+	run_cmd mv /etc/hosts /etc/hosts.1
 	save_output /etc/hosts eval "$_cmd"
+	if [ -f /etc/hosts ]; then
+	    run_cmd rm -Rf /etc/hosts.1
+	else
+	    run_cmd /etc/hosts.1 /etc/hosts
+	fi
     fi
 
     if [ -f /etc/hosts ]; then
@@ -437,13 +443,19 @@ update_fstab_entry() {
 
 install_pkgs() {
     for pkg in $*; do
-	run_cmd pkg install -y $pkg
+	if pkg info $pkg 2>&1 >/dev/null; then
+	    :
+	else
+	    run_cmd pkg install -y $pkg
+	fi
     done
 }
 
 uninstall_pkgs() {
     for pkg in $*; do
-	run_cmd pkg remove -y $pkg\*
+	if pkg info $pkg 2>&1 >/dev/null; then
+	    run_cmd pkg remove -y $pkg\*
+	fi
 	# ignore error of uninstall package
 	true
     done
@@ -474,6 +486,7 @@ render_to() {
 
     _to="$1"
     _tp="$2"
+    run_cmd rm -Rf "$_to"
     save_output "$_to" render_template "$_tp"
 }
 

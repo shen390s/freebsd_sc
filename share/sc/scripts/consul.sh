@@ -26,21 +26,35 @@ consul_cleanup() {
 }
 
 config_consul_client() {
-    local _bind_addr _server_hosts
+    local _bind_addr _server_hosts _c1 _c2
 
-    _bind_addr=`consul_bind_ip $NETIF`
-    _server_hosts=`shape_server_hosts`
-    _DATACENTER="$DATACENTER"
-    _BIND_ADDR="$_bind_addr"
-    _SERVERS="$_server_hosts"
-    render_to /usr/local/etc/consul.d/consul.hcl \
-	      $TOP/share/sc/templates/consul.hcl.template 
+    _c1=/usr/local/etc/sc/sc.conf
+    _c2=/usr/local/etc/consul.d/consul.hcl
+
+    if [ ! -f $_c2 -o `file_newer $_c1 $_c2` ]; then
+	_bind_addr=`consul_bind_ip $NETIF`
+	_server_hosts=`shape_server_hosts`
+	_DATACENTER="$DATACENTER"
+	_BIND_ADDR="$_bind_addr"
+	_SERVERS="$_server_hosts"
+	render_to /usr/local/etc/consul.d/consul.hcl \
+		  $TOP/share/sc/templates/consul.hcl.template 
+	touch /var/run/.sc.consul.updated
+    fi
 }
 
 config_consul_srv() {
-    _VOTE_COUNT=`get_voted_server_count`
-    render_to /usr/local/etc/consul.d/server.hcl \
-	      $TOP/share/sc/templates/consul-server.hcl.template 
+    local _c1 _c2
+
+    _c1=/usr/local/etc/sc/sc.conf
+    _c2=/usr/local/etc/consul.d/server.hcl
+
+    if [ ! -f $_c2 -o `file_newer $_c1 $_c2` ]; then
+	_VOTE_COUNT=`get_voted_server_count`
+	render_to /usr/local/etc/consul.d/server.hcl \
+		  $TOP/share/sc/templates/consul-server.hcl.template 
+	touch /var/run/.sc.consul.updated
+    fi
 }
 
 config_consul() {
@@ -72,7 +86,6 @@ disable_consul() {
     set_conf rc consul_enable
 }
 
-
 consul_apply_sc() {
     install_pkgs consul 
     config_consul "$1"
@@ -81,9 +94,9 @@ consul_apply_sc() {
 
 consul_apply_none() {
     consul_stop
-    uninstall_pkgs consul
     disable_consul
     consul_cleanup
+    uninstall_pkgs consul
 }
 
 consul_apply() {
@@ -93,6 +106,20 @@ consul_apply() {
 	    ;;
 	*)
 	    consul_apply_none
+	    ;;
+    esac
+}
+
+consul_start() {
+    case "$1" in
+	client|server)
+	    if [ -f /var/run/.sc.consul.updated ]; then
+		run_cmd service consul restart
+		rm -Rf /var/run/.sc.consul.updated
+	    fi
+	    ;;
+	*)
+	    true   # we need to do nothing
 	    ;;
     esac
 }

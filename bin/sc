@@ -26,6 +26,20 @@ load_conf() {
 	. $_conf
 }
 
+get_role() {
+    local _all_hosts _role
+    
+    _all_hosts=`get_all_hosts`
+    if ! name_in_list `hostname` $_all_hosts; then
+	_role=none
+    elif is_server; then
+	_role=server
+    else
+	_role=client
+    fi
+    echo $_role
+}
+
 install() {
     parse_opts install "$@"
 
@@ -50,19 +64,32 @@ install() {
     run_cmd cp $CONF /usr/local/etc/sc 
 
     if [ ! -d /usr/local/share/sc ]; then
-	run_cmd mkdir -p /usr/local/etc/share/sc
+	run_cmd mkdir -p /usr/local/share/sc
     fi
 
-    run_cmd cp -Rf $TOP/share/sc/* /usr/local/etc/share/sc
+    run_cmd cp -Rf $TOP/share/sc/* /usr/local/share/sc
 
-    save_output /usr/local/etc/sc/sc.conf \
-		cat $CONF && echo "NETIF=$NETIF"
-    save_output /etc/rc.local echo /usr/local/bin/sc update && \
-	echo /usr/local/bin/sc start
+    if [ "X$CONF" != "X/usr/local/etc/sc/sc.conf" ]; then
+	run_cmd rm /usr/local/etc/sc/sc.conf
+	save_output /usr/local/etc/sc/sc.conf cat $CONF
+	save_output /usr/local/etc/sc/sc.conf echo "NETIF=$NETIF"
+    fi
+
+    if cat /etc/rc.local | grep "#SC_APPLY" 2>&1 >/dev/null; then
+	:
+    else
+	save_output /etc/rc.local echo "/usr/local/bin/sc apply \#SC_APPLY"
+    fi
+
+    if cat /etc/rc.local | grep  "#SC_START" 2>&1 >/dev/null; then
+	:
+    else
+	save_output /etc/rc.local echo "/usr/local/bin/sc start \#SC_START"
+    fi
 }
 
 apply() {
-    local _role _all_hosts _s
+    local _role _s
 
     parse_opts apply "$@"
     if [ $? != 0 ]; then
@@ -73,15 +100,7 @@ apply() {
     echo "Using conf $CONF netif $NETIF "
     load_conf "$CONF"
 
-    _all_hosts=`get_all_hosts`
-    if ! name_in_list `hostname` $_all_hosts; then
-	_role=none
-    elif is_server; then
-	_role=server
-    else
-	_role=client
-    fi
-
+    _role=`get_role`
     for _s in hosts fs carp consul nomad pot traefik; do
 	if fn_defined "${_s}_apply"; then
 	    eval "${_s}_apply $_role"
@@ -92,8 +111,6 @@ apply() {
 	fi
     done
 
-    echo "Host apply $_role success. "
-    echo "Please reboot the system"
 }
 
 run_test() {
@@ -116,6 +133,10 @@ run_test() {
 
 usage() {
     echo "usage: $1"
+    echo "      $1 install [ -c config] [ -i netif] [ -n ]"
+    echo "      $1 uninstall [ -n ]"
+    echo "      $1 start [ -n ]"
+    echo "      $1 update [ -n ]"
     echo "      $1 apply [ -c config ] [ -i netif ] [ -n ]"
     echo "      $1 test <testcase> (in testsuite directory)"
     echo "      usage (show this help)"
@@ -127,11 +148,17 @@ usage() {
 }
 
 start() {
-    true
-}
+    local _s _role
 
-update() {
-    true
+    load_conf "$CONF"
+
+    _role=`get_role`
+
+    for _s in hosts fs consul nomad traefik pot; do
+	if fn_defined "${_s}_start"; then
+	    eval "${_s}_start $_role"
+	fi
+    done
 }
 
 action="$1"
@@ -141,9 +168,6 @@ case $action in
     install)
 	install "$@"
 	;;
-    update)
-	update "$@"
-	;;
     start)
 	start "$@"
 	;;
@@ -152,6 +176,9 @@ case $action in
 	;;
     test)
 	run_test "$@"
+	;;
+    help)
+	usage sc
 	;;
     *)
 	usage sc

@@ -12,11 +12,18 @@ traefik_stop() {
 }
 
 mk_traefik_config() {
-    
-    _DATACENTER="$DATACENTER"
-    _DOMAIN="$DOMAIN"
-    render_to /usr/local/etc/traefik.toml \
-	      $TOP/share/sc/templates/traefik.toml.template
+    local _c1 _c2
+
+    _c1=/usr/local/etc/sc/sc.conf
+    _c2=/usr/local/etc/traefik.toml
+
+    if [ ! -f $_c2 -o `file_newer $_c1 $_c2` ]; then
+	_DATACENTER="$DATACENTER"
+	_DOMAIN="$DOMAIN"
+	render_to /usr/local/etc/traefik.toml \
+		  $TOP/share/sc/templates/traefik.toml.template
+	touch /var/run/.sc.traefik.updated
+    fi
 }
 
 config_traefik() {

@@ -5,38 +5,53 @@ nomad_stop() {
 }
 
 mk_nomad_client_config() {
-    local _servers _s _sep
-    if is_server; then
-	_servers="\"127.0.0.1:4647\""
-    else
-	_servers=""
-	_sep=""
-	for _s in `get_server_list`; do
-	    _servers="$_servers $_sep \"$_s:4647\""
-	    _sep=','
-	done
-    fi
+    local _servers _s _sep _c1 _c2
 
-    _DATACENTER="$DATACENTER"
-    _SERVERS="$_servers"
-    render_to /usr/local/etc/nomad/client.hcl \
-	      $TOP/share/sc/templates/nomad-client.hcl.template 
+    _c1=/usr/local/etc/sc/sc.conf
+    _c2=/usr/local/etc/nomad/client.hcl
+
+    if [ ! -f $_c2 -o `file_newer $_c1 $_c2` ]; then
+	if is_server; then
+	    _servers="\"127.0.0.1:4647\""
+	else
+	    _servers=""
+	    _sep=""
+	    for _s in `get_server_list`; do
+		_servers="$_servers $_sep \"$_s:4647\""
+		_sep=','
+	    done
+	fi
+
+	_DATACENTER="$DATACENTER"
+	_SERVERS="$_servers"
+	render_to /usr/local/etc/nomad/client.hcl \
+		  $TOP/share/sc/templates/nomad-client.hcl.template 
+
+	touch /var/run/.sc.nomad.updated
+    fi
 }
 
 mk_nomad_srv_config() {
-    local _bind_ip _vars
+    local _bind_ip _vars _c1 _c2
 
-    _bind_ip=`get_bind_ip $NETIF`
+    _c1=/usr/local/etc/sc/sc.conf
+    _c2=/usr/local/etc/nomad/server.hcl
 
-    if is_server; then
-	_BIND_ADDR="$_bind_ip"
-	_VOTE_COUNT=`get_voted_server_count`
-	render_to /usr/local/etc/nomad/server.hcl \
-		  $TOP/share/sc/templates/nomad-server.hcl.template 
-    else
-	save_output /usr/local/etc/nomad/server.hcl \
-		    echo server { enabled = false } 
-		    #printf 'server {\n\tenabled = false\n}\n'
+    if [ ! -f $_c2 -o `file_newer $_c1 $_c2` ]; then
+	_bind_ip=`get_bind_ip $NETIF`
+
+	if is_server; then
+	    _BIND_ADDR="$_bind_ip"
+	    _VOTE_COUNT=`get_voted_server_count`
+	    render_to /usr/local/etc/nomad/server.hcl \
+		      $TOP/share/sc/templates/nomad-server.hcl.template 
+	else
+	    run_cmd rm -Rf /usr/local/etc/nomad/server.hcl
+	    save_output /usr/local/etc/nomad/server.hcl \
+			echo server { enabled = false } 
+	    #printf 'server {\n\tenabled = false\n}\n'
+	fi
+	touch /var/run/.sc.nomad.updated
     fi
 }
 
@@ -80,8 +95,15 @@ nomad_cleanup() {
     run_cmd rm -Rf /use/local/etc/nomad
 }
 
-nomad_apply_sc() {
+nomad_install() {
     install_pkgs nomad nomad-pot-driver
+}
+
+nomad_uninstall() {
+    uninstall_pkgs nomad-pot-driver nomad
+}
+
+nomad_apply_sc() {
     config_nomad
     enable_nomad
 }
@@ -89,7 +111,6 @@ nomad_apply_sc() {
 nomad_apply_none() {
     nomad_stop
     disable_nomad
-    uninstall_pkgs nomad-pot-driver nomad
     nomad_cleanup
 }
 
@@ -100,6 +121,20 @@ nomad_apply() {
 	    ;;
 	*)
 	    nomad_apply_none
+	    ;;
+    esac
+}
+
+nomad_start() {
+    case "$1" in
+	client|server)
+	    if [ -f /var/run/.sc.nomad.updated ]; then
+		run_cmd service nomad restart
+		rm -Rf /var/run/.sc.nomad.updated
+	    fi
+	    ;;
+	*)
+	    true
 	    ;;
     esac
 }
