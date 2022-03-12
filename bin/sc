@@ -4,14 +4,14 @@ _appdir=`dirname $0`
 TOP=`cd $_appdir/.. && pwd`
 _conf="$1"
 
-. $TOP/share/scripts/common.sh
-. $TOP/share/scripts/carp.sh
-. $TOP/share/scripts/hosts.sh
-. $TOP/share/scripts/consul.sh
-. $TOP/share/scripts/fs.sh
-. $TOP/share/scripts/nomad.sh
-. $TOP/share/scripts/pot.sh
-. $TOP/share/scripts/traefik.sh
+. $TOP/share/sc/scripts/common.sh
+. $TOP/share/sc/scripts/carp.sh
+. $TOP/share/sc/scripts/hosts.sh
+. $TOP/share/sc/scripts/consul.sh
+. $TOP/share/sc/scripts/fs.sh
+. $TOP/share/sc/scripts/nomad.sh
+. $TOP/share/sc/scripts/pot.sh
+. $TOP/share/sc/scripts/traefik.sh
 
 . $TOP/etc/sc/default.conf
 
@@ -28,6 +28,37 @@ load_conf() {
 
 install() {
     parse_opts install "$@"
+
+    if [ $? != 0 ]; then
+	usage sc
+	exit 1
+    fi
+
+    load_conf "$CONF"
+
+    if [ ! -d /usr/local/bin ]; then
+	run_cmd mkdir -p /usr/local/bin
+    fi
+    
+    run_cmd cp $TOP/bin/sc /usr/local/bin 
+
+    if [ ! -d /usr/local/etc/sc ]; then
+	run_cmd mkdir -p /usr/local/etc/sc
+    fi
+
+    run_cmd cp $TOP/etc/sc/default.conf /usr/local/etc/sc
+    run_cmd cp $CONF /usr/local/etc/sc 
+
+    if [ ! -d /usr/local/share/sc ]; then
+	run_cmd mkdir -p /usr/local/etc/share/sc
+    fi
+
+    run_cmd cp -Rf $TOP/share/sc/* /usr/local/etc/share/sc
+
+    save_output /usr/local/etc/sc/sc.conf \
+		cat $CONF && echo "NETIF=$NETIF"
+    save_output /etc/rc.local echo /usr/local/bin/sc update && \
+	echo /usr/local/bin/sc start
 }
 
 apply() {
@@ -95,12 +126,26 @@ usage() {
     return 1
 }
 
+start() {
+    true
+}
+
+update() {
+    true
+}
+
 action="$1"
 shift
 
 case $action in
     install)
 	install "$@"
+	;;
+    update)
+	update "$@"
+	;;
+    start)
+	start "$@"
 	;;
     apply)
 	apply "$@"
