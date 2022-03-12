@@ -1,0 +1,13 @@
+advertise { 
+  http = "${_BIND_ADDR}"
+  serf = "${_BIND_ADDR}"
+  rpc  = "${_BIND_ADDR}"
+}
+
+# Enable the server
+server {
+  enabled = true
+
+  # Self-elect, should be 3 or 5 for production
+  bootstrap_expect = ${_VOTE_COUNT}
+} 
