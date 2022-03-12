@@ -4,16 +4,18 @@ _appdir=`dirname $0`
 TOP=`cd $_appdir/.. && pwd`
 _conf="$1"
 
-. $TOP/lib/common.sh
-. $TOP/lib/carp.sh
-. $TOP/lib/hosts.sh
-. $TOP/lib/consul.sh
-. $TOP/lib/fs.sh
-. $TOP/lib/nomad.sh
-. $TOP/lib/pot.sh
-. $TOP/lib/traefik.sh
+. $TOP/share/scripts/common.sh
+. $TOP/share/scripts/carp.sh
+. $TOP/share/scripts/hosts.sh
+. $TOP/share/scripts/consul.sh
+. $TOP/share/scripts/fs.sh
+. $TOP/share/scripts/nomad.sh
+. $TOP/share/scripts/pot.sh
+. $TOP/share/scripts/traefik.sh
 
-. $TOP/conf/default.conf
+. $TOP/etc/sc/default.conf
+
+CONF=/usr/local/etc/sc/sc.conf
 
 load_conf() {
     local _conf
@@ -22,6 +24,10 @@ load_conf() {
     test ! -z "$_conf" && \
 	test -f $_conf && \
 	. $_conf
+}
+
+install() {
+    parse_opts install "$@"
 }
 
 apply() {
@@ -62,7 +68,7 @@ apply() {
 run_test() {
     local _tst
 
-    _tst="$TOP/testsuite/$1.sh"
+    _tst="$TOP/share/sc/testsuite/$1.sh"
     if [ -f "$_tst" ]; then
 	. $_tst
 	if fn_defined run_case ; then
@@ -93,6 +99,9 @@ action="$1"
 shift
 
 case $action in
+    install)
+	install "$@"
+	;;
     apply)
 	apply "$@"
 	;;
