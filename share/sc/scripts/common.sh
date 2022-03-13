@@ -226,6 +226,22 @@ get_all_hosts() {
     echo "$_all_hosts"
 }
 
+my_host_idx() {
+    local _all_hosts _h _idx _host
+
+    _all_hosts=`get_all_hosts`
+    _h=`hostname`
+    _idx=0
+
+    for _host in $_all_hosts; do
+	if [ "X$_h" == "X$_host" ]; then
+	    echo $_idx
+	    return
+	fi
+	_idx=`expr $_idx + 1`
+    done   
+}
+
 get_server_count() {
     local _servers _nc _s
 
