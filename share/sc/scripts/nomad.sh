@@ -48,13 +48,15 @@ mk_nomad_client_config() {
 }
 
 mk_nomad_srv_config() {
-    local _bind_ip _vars 
+    local _bind_ip _vars _server_hosts
 
     _bind_ip=`get_bind_ip $NETIF`
 
     if is_server; then
+	_server_hosts=`shape_server_hosts`
 	_BIND_ADDR="$_bind_ip"
 	_VOTE_COUNT=`get_voted_server_count`
+	_SERVERS="$_server_hosts"
 	render_to /usr/local/etc/nomad/server.hcl \
 		  $TOP/share/sc/templates/nomad-server.hcl.template 
     else

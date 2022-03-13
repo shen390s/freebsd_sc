@@ -318,6 +318,18 @@ get_bind_ip() {
     get_interface_ips "$1"| awk '{print $1}'
 }
 
+shape_server_hosts() {
+    local _h _sep _hosts
+
+    _set=
+    _hosts=
+    for _h in `get_server_list`; do
+	_hosts="$_hosts$_sep\"$_h\""
+	_sep=","
+    done
+    echo "$_hosts"
+}
+
 update_host_entry() {
     local _line _comments _data _break _ip _host _ip2 _found _ok
     
@@ -465,7 +477,7 @@ update_fstab_entry() {
 
 install_pkgs() {
     for pkg in $*; do
-	if pkg info $pkg 2>&1 >/dev/null; then
+	if pkg info -e $pkg 2>&1 >/dev/null; then
 	    :
 	else
 	    run_cmd pkg install -y $pkg
@@ -475,7 +487,7 @@ install_pkgs() {
 
 uninstall_pkgs() {
     for pkg in $*; do
-	if pkg info $pkg 2>&1 >/dev/null; then
+	if pkg info -e $pkg 2>&1 >/dev/null; then
 	    run_cmd pkg remove -y $pkg\*
 	fi
 	# ignore error of uninstall package
