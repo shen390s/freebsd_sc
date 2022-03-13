@@ -20,6 +20,21 @@ pot_need_update() {
     fi
 }
 
+pot_patch() {
+    local _p _dir _t
+
+    _dir=$TOP/share/sc/patches/pot
+
+    for _p in $_dir/*.diff; do
+	_t=`basename $_p | sed -e 's/.diff/.patched/g'`
+
+	if [ ! -f /usr/local/share/pot/.$_t ]; then
+	    patch -d /usr/local/share/pot < $_p
+	    touch /usr/local/share/pot/.$_t
+	fi
+    done
+}
+
 update_jails_conf() {
     local _jails _j _root _ip _idx _f
 

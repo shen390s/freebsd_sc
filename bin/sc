@@ -40,6 +40,16 @@ get_role() {
     echo $_role
 }
 
+do_patch() {
+    local _s
+
+    for _s in consul nomad pot; do
+	if fn_defined "${_s}_patch" ; then
+	    eval "${_s}_patch"
+	fi
+    done
+}
+
 install() {
     parse_opts install "$@"
 
@@ -75,6 +85,8 @@ install() {
 	save_output /usr/local/etc/sc/sc.conf echo "NETIF=$NETIF"
     fi
 
+    do_patch
+    
     run_cmd touch /etc/rc.local
     
     if cat /etc/rc.local | grep "#SC_APPLY" 2>&1 >/dev/null; then
