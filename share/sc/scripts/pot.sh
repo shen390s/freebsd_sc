@@ -38,8 +38,8 @@ pot_patch() {
 update_jails_conf() {
     local _jails _j _root _ip _idx _f
 
-    _jails=`pot ls -q |xargs echo `
-    _root=`pot config -g fs_root |awk '{print $3}'`
+    _jails=`/usr/local/bin/pot ls -q |xargs echo `
+    _root=`/usr/local/bin/pot config -g fs_root |awk '{print $3}'`
     _idx=`my_host_idx`
     
     if [ -z "$_root" ]; then
@@ -67,7 +67,7 @@ update_jails_conf() {
 }
 
 pot_conf_data() {
-    local _hostid
+    local _hostid _idx1 _idx2
 
     _hostid=`my_host_idx`
 
@@ -75,10 +75,13 @@ pot_conf_data() {
 	_hostid=0
     fi
     
+    _idx2=`expr $_hostid % 253`
+    _idx1=`expr $_hostid / 253`
+    _idx1=`expr 192 + $_idx1`
     cat <<EOF
-POT_NETWORK=10.192.${_hostid}.0/24
-POT_GATEWAY=10.192.${_hostid}.1
-POT_DNS_IP=10.192.${_hostid}.2
+POT_NETWORK=10.${_idx1}.${_idx2}.0/24
+POT_GATEWAY=10.${_idx1}.${_idx2}.1
+POT_DNS_IP=10.${_idx1}.${_idx2}.2
 EOF
 }
 config_pot() {

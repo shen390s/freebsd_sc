@@ -21,11 +21,17 @@ vxlan_group() {
 }
 
 vxlan_inet() {
-    local _host _inet
+    local _host _inet _idx1 _idx2
 
     _host=`my_host_idx`
-    _host=`expr $_host + 1`
-    _inet="172.16.1.$_host"
+    # do not use IP address
+    # - x.x.x.0
+    # - x.x.x.254
+    # - x.x.x.255
+    _idx1=`expr $_host / 253`
+    _idx2=`expr $_host % 253`
+    _idx2=`expr $_idx2 + 1`
+    _inet="172.16.${_idx1}.${_idx2}"
     echo $_inet
 }
 
