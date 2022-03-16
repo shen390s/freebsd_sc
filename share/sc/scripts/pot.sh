@@ -36,7 +36,7 @@ pot_patch() {
 }
 
 update_jails_conf() {
-    local _jails _j _root _ip _idx _f
+    local _jails _j _root _ip _idx _f _idx1 _idx2
 
     _jails=`/usr/local/bin/pot ls -q |xargs echo `
     _root=`/usr/local/bin/pot config -g fs_root |awk '{print $3}'`
@@ -48,13 +48,21 @@ update_jails_conf() {
 
     for _j in $_jails; do
 	_f=$_root/jails/$_j/conf/pot.conf
+
+	if [ ! -f $_f ]; then
+	    continue
+	fi
+	
 	_ip=`sysrc -i -n -f $_f ip`
 	if [ -z "$_ip" ]; then
 	    continue
 	fi
 
+	_idx2=`expr $_hostid % 253`
+	_idx1=`expr $_hostid / 253`
+	_idx1=`expr 192 + $_idx1`
 	_ip=`echo $_ip |awk -F. '{print $4}'`
-	_ip="10.192.${_idx}.${_ip}"
+	_ip="10.${_idx1}.${_idx2}.${_ip}"
 
 	run_cmd mv  $_f ${_f}.old
 	save_output $_f eval "cat ${_f}.old |grep -E -v '^ip='"
@@ -141,6 +149,9 @@ pot_apply() {
 pot_start() {
     local _pot_bridge _ip _vxlan_if
     
+    PATH=$PATH:/usr/local/bin
+    export PATH
+    
     /usr/local/bin/pot vnet-start
     _pot_bridge=`sc_pot_bridge`
 
@@ -160,5 +171,6 @@ pot_start() {
 	ifconfig $_pot_bridge addm ${_vxlan_if}
     fi
     
-    echo "POT bridge $_pot_bridge"
+    # prune jails
+    /usr/local/bin/pot prune
 }

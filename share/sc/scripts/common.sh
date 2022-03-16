@@ -1,21 +1,5 @@
-fn_defined() {
-    local  _fn _z
-
-    _fn="$1"
-    _z=`type "$_fn" 2>/dev/null | head -n 1`
-    case "$_z" in
-	${_fn}*function*)
-	    true
-	    ;;
-	*)
-	    false
-	    ;;
-    esac
-}
-
-uniq_list() {
-    echo $* |xargs -n 1 echo |sort |uniq |xargs echo
-}
+. $TOP/share/sc/scripts/funcs.sh
+. $TOP/share/sc/scripts/pkgmgr.sh
 
 parse_opts() {
     local _tag _optf
@@ -141,47 +125,6 @@ get_conf() {
     fi
 }
 
-run_cmd() {
-    if [ "X$DRY_RUN" = "Xyes" ]; then
-	echo "$@"
-    else
-	eval "$@"
-    fi
-}
-
-save_output() {
-    local _to
-
-    _to="$1"
-    shift
-
-    if [ "X$DRY_RUN" = "Xyes" ]; then
-	echo
-	echo "!!!Following data will be appended to file $_to !!!"
-	echo
-	eval "$@"
-    else
-	eval "$@ >> $_to"
-    fi
-}
-
-random_num() {
-    local _min _max
-
-    _min="$1"
-    _max="$2"
-
-    if [ -z "$_min" ]; then
-	_min=10
-    fi
-
-    if [ -z "$_max" ]; then
-	_max=200
-    fi
-    
-    awk -v min=$_min -v max=$_max 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'
-}
-
 get_server_list() {
     local _servers _h _item _is_server
 
@@ -261,21 +204,6 @@ get_voted_server_count() {
     expr $_nc + 1
 }
 
-name_in_list() {
-    local _name _n2
-
-    _name="$1"
-    shift
-
-    for _n2 in $*; do
-	if [ "X$_name" = "X$_n2" ]; then
-	    true
-	    return
-	fi
-    done
-    false
-}
-
 is_server() {
     local _host _servers
 
@@ -285,25 +213,6 @@ is_server() {
     name_in_list $_host "$_servers"
 }
 
-exclude_from_list() {
-    local _item _all _ix _sep
-
-    _item="$1"
-    shift
-    _all=""
-    _sep=""
-
-    for _ix in $*; do
-	if [ "X$_item" =  "X$_ix" ]; then
-	    :
-	else
-	    _all="$_all$_sep$_ix"
-	    _sep=" "
-	fi
-    done
-
-    echo "$_all"
-}
 
 get_interface_ips() {
     local _if
@@ -473,26 +382,6 @@ update_fstab_entry() {
     if [ "X$_ok" = "Xno" ]; then
 	echo "$_fs $_mnt nfs rw 0 0"
     fi
-}
-
-install_pkgs() {
-    for pkg in $*; do
-	if pkg info -e $pkg 2>&1 >/dev/null; then
-	    :
-	else
-	    run_cmd pkg install -y $pkg
-	fi
-    done
-}
-
-uninstall_pkgs() {
-    for pkg in $*; do
-	if pkg info -e $pkg 2>&1 >/dev/null; then
-	    run_cmd pkg remove -y $pkg\*
-	fi
-	# ignore error of uninstall package
-	true
-    done
 }
 
 render_in() {
