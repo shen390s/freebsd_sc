@@ -109,7 +109,17 @@ nomad_cleanup() {
 }
 
 nomad_install() {
-    install_pkgs nomad nomad-pot-driver
+    local _f
+
+    _f=/usr/local/bin/nomad
+    if [ ! -f $_f -o ! -x $_f ]; then
+	install_pkgs nomad
+    fi
+
+    _f=/usr/local/libexec/nomad/plugins/nomad-pot-driver
+    if [ ! -f $_f -o ! -x $_f ]; then
+	install_pkgs nomad-pot-driver
+    fi
 }
 
 nomad_uninstall() {

@@ -95,7 +95,13 @@ disable_consul() {
 }
 
 consul_apply_sc() {
-    install_pkgs consul 
+    local _f
+
+    _f=/usr/local/bin/consul
+    if [ ! -f $_f -o ! -x $_f ]; then
+	install_pkgs consul
+    fi
+    
     config_consul "$1"
     enable_consul
 }

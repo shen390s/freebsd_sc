@@ -1,10 +1,6 @@
 . $TOP/share/sc/scripts/common.sh
 . $TOP/share/sc/scripts/vxlan.sh
 
-pot_pkgs() {
-    echo pot 
-}
-
 pot_need_update() {
     local _c1 _c2 
 
@@ -133,10 +129,20 @@ sc_pot_bridge() {
 }
 
 pot_apply() {
+    local _f
     if pot_need_update ; then
 	case "$1" in
 	    client|server)
-		run_cmd pkg install -y pot
+		_f=/usr/local/bin/pot
+		if [ ! -f $_f -o ! -x $_f ]; then
+		    install_pkgs pot
+		fi
+
+		_f=/usr/local/bin/potnet
+		if [ ! -f $_f -o ! -x $_f ]; then
+		    install_pkgs potnet
+		fi
+		
 		config_pot
 		;;
 	    *)

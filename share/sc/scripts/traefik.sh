@@ -54,7 +54,13 @@ enable_traefik() {
 }
 
 traefik_apply_server() {
-    install_pkgs traefik
+    local _f
+
+    _f=/usr/local/bin/traefik
+    if [ ! -f $_f -o ! -x $_f ]; then
+	install_pkgs traefik
+    fi
+    
     config_traefik "server"
     enable_traefik "server"
 }
