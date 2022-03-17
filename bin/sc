@@ -13,6 +13,7 @@ _conf="$1"
 . $TOP/share/sc/scripts/pot.sh
 . $TOP/share/sc/scripts/traefik.sh
 
+# load default configuration settings
 . $TOP/etc/sc/default.conf
 
 CONF=/usr/local/etc/sc/sc.conf
@@ -150,14 +151,15 @@ usage() {
     echo "      $1 install [ -c config] [ -i netif] [ -n ]"
     echo "      $1 uninstall [ -n ]"
     echo "      $1 start [ -n ]"
-    echo "      $1 update [ -n ]"
-    echo "      $1 apply [ -c config ] [ -i netif ] [ -n ]"
+    echo "      $1 apply  [ -n ]"
     echo "      $1 test <testcase> (in testsuite directory)"
     echo "      usage (show this help)"
     echo
     echo "      1. config is the configuration file. see examples/conf/cluster.conf"
     echo "      2. netif is the network interface(default is em0)"
     echo "      3. -n turn on dry run mode(Just show what works which will be done)"
+    echo "      4. If you have changed the configuration of cluster(/usr/local/etc/sc/sc.conf)"
+    echo "         please run sc apply && sc start to apply the change or reboot system"
     return 1
 }
 
