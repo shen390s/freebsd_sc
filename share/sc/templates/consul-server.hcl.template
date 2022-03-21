@@ -1,6 +1,6 @@
 server = true
 client_addr = "0.0.0.0"
-bootstrap_expect = ${_VOTE_COUNT}
+bootstrap_expect = %%_VOTE_COUNT%%
 
 connect {
     enabled = true

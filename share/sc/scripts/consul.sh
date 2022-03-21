@@ -4,18 +4,6 @@ consul_stop() {
     run_cmd service consul stop
 }
 
-shape_server_hosts() {
-    local _h _sep _hosts
-
-    _set=
-    _hosts=
-    for _h in `get_server_list`; do
-	_hosts="$_hosts$_sep\"$_h\""
-	_sep=","
-    done
-    echo "$_hosts"
-}
-
 consul_bind_ip() {
     get_bind_ip "$1"
 }
@@ -46,23 +34,15 @@ consul_need_update() {
 }
 
 config_consul_client() {
-    local _bind_addr _server_hosts 
-
-    _bind_addr=`consul_bind_ip $NETIF`
-    _server_hosts=`shape_server_hosts`
-    _DATACENTER="$DATACENTER"
-    _BIND_ADDR="$_bind_addr"
-    _SERVERS="$_server_hosts"
     render_to /usr/local/etc/consul.d/consul.hcl \
 	      $TOP/share/sc/templates/consul.hcl.template 
-    touch /var/run/.sc.consul.updated
+    run_cmd touch /var/run/.sc.consul.updated
 }
 
 config_consul_srv() {
-    _VOTE_COUNT=`get_voted_server_count`
     render_to /usr/local/etc/consul.d/server.hcl \
 	      $TOP/share/sc/templates/consul-server.hcl.template 
-    touch /var/run/.sc.consul.updated
+    run_cmd touch /var/run/.sc.consul.updated
 }
 
 config_consul() {

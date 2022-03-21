@@ -31,6 +31,8 @@ test_config() {
 }
 
 run_case() {
+    # set -x
     test_config "client"
     test_config "server"
+    # set +x
 }

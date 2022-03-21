@@ -24,11 +24,9 @@ traefik_need_update() {
     fi
 }
 mk_traefik_config() {
-    _DATACENTER="$DATACENTER"
-    _DOMAIN="$DOMAIN"
     render_to /usr/local/etc/traefik.toml \
 	      $TOP/share/sc/templates/traefik.toml.template
-    touch /var/run/.sc.traefik.updated
+    run_cmd touch /var/run/.sc.traefik.updated
 }
 
 config_traefik() {

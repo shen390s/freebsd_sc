@@ -26,46 +26,22 @@ nomad_need_update() {
 
 
 mk_nomad_client_config() {
-    local _servers _s _sep 
-
-    if is_server; then
-	_servers="\"127.0.0.1:4647\""
-    else
-	_servers=""
-	_sep=""
-	for _s in `get_server_list`; do
-	    _servers="$_servers $_sep \"$_s:4647\""
-	    _sep=','
-	done
-    fi
-
-    _DATACENTER="$DATACENTER"
-    _SERVERS="$_servers"
     render_to /usr/local/etc/nomad/client.hcl \
 	      $TOP/share/sc/templates/nomad-client.hcl.template 
 
-    touch /var/run/.sc.nomad.updated
+    run_cmd touch /var/run/.sc.nomad.updated
 }
 
 mk_nomad_srv_config() {
-    local _bind_ip _vars _server_hosts
-
-    _bind_ip=`get_bind_ip $NETIF`
-
     if is_server; then
-	_server_hosts=`shape_server_hosts`
-	_BIND_ADDR="$_bind_ip"
-	_VOTE_COUNT=`get_voted_server_count`
-	_SERVERS="$_server_hosts"
 	render_to /usr/local/etc/nomad/server.hcl \
 		  $TOP/share/sc/templates/nomad-server.hcl.template 
     else
 	run_cmd rm -Rf /usr/local/etc/nomad/server.hcl
 	save_output /usr/local/etc/nomad/server.hcl \
 		    echo server { enabled = false } 
-	#printf 'server {\n\tenabled = false\n}\n'
     fi
-    touch /var/run/.sc.nomad.updated
+    run_cmd touch /var/run/.sc.nomad.updated
 }
 
 config_nomad_client() {

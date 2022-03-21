@@ -17,5 +17,3 @@ uninstall_pkgs() {
 	true
     done
 }
-
-}

@@ -1,5 +1,6 @@
 . $TOP/share/sc/scripts/funcs.sh
 . $TOP/share/sc/scripts/pkgmgr.sh
+. $TOP/share/sc/scripts/render.sh
 
 parse_opts() {
     local _tag _optf
@@ -49,24 +50,6 @@ parse_opts() {
 	esac
     done
     export CONF NETIF DRY_RUN
-}
-
-file_modify_time() {
-    eval $(stat -s "$1")
-    echo $st_mtime
-}
-
-file_newer() {
-    local _mt1 _mt2
-
-    _mt1=`file_modify_time "$1"`
-    _mt2=`file_modify_time "$2"`
-
-    if [ $_mt1 -gt $_mt2 ]; then
-	echo yes
-    else
-	echo no
-    fi
 }
 
 set_boot_conf() {
@@ -123,120 +106,6 @@ get_conf() {
     else
 	echo
     fi
-}
-
-get_server_list() {
-    local _servers _h _item _is_server
-
-    if [ ! -z "$SERVER_HOSTS" ]; then
-	echo "$SERVER_HOSTS"
-	return
-    fi
-    
-    _servers=
-    for _item in $CLUSTER_HOSTS; do
-	_is_server=`echo $_item |awk -F: '{print $2}'`
-	_h=`echo $_item |awk -F: '{print $1}'`
-	if [ -z "$_is_server" -o "X$_is_server" != "X1" ]; then
-	    true
-	else
-	    _servers="$_servers $_h"
-	fi
-    done
-
-    SERVER_HOSTS="$_servers"
-    export SERVER_HOSTS
-    echo "$_servers"
-}
-
-get_all_hosts() {
-    local _all_hosts _item _h
-
-    if [ ! -z $ALL_HOSTS ]; then
-	echo "$ALL_HOSTS"
-	return
-    fi
-    
-    _all_hosts=
-    for _item in $CLUSTER_HOSTS; do
-	_h=`echo $_item | awk -F: '{print $1}'`
-	_all_hosts="$_all_hosts $_h"
-    done
-
-    ALL_HOSTS="$_all_hosts"
-    export ALL_HOSTS
-
-    echo "$_all_hosts"
-}
-
-my_host_idx() {
-    local _all_hosts _h _idx _host
-
-    _all_hosts=`get_all_hosts`
-    _h=`hostname`
-    _idx=0
-
-    for _host in $_all_hosts; do
-	if [ "X$_h" == "X$_host" ]; then
-	    echo $_idx
-	    return
-	fi
-	_idx=`expr $_idx + 1`
-    done   
-}
-
-get_server_count() {
-    local _servers _nc _s
-
-    _nc=0
-    _servers=`get_server_list`
-    for _s in $_servers; do
-	_nc=`expr $_nc + 1`
-    done
-    echo $_nc
-}
-
-get_voted_server_count() {
-    local _nc
-
-    _nc=`get_server_count`
-    _nc=`expr $_nc / 2`
-    expr $_nc + 1
-}
-
-is_server() {
-    local _host _servers
-
-    _host=`hostname`
-    _servers=`get_server_list`
-
-    name_in_list $_host "$_servers"
-}
-
-
-get_interface_ips() {
-    local _if
-
-    _if="$1"
-
-    # do not include ip address with vhid
-    ifconfig "$_if" |grep -v vhid|awk '$1 == "inet" {print $2}' |xargs echo
-}
-
-get_bind_ip() {
-    get_interface_ips "$1"| awk '{print $1}'
-}
-
-shape_server_hosts() {
-    local _h _sep _hosts
-
-    _set=
-    _hosts=
-    for _h in `get_server_list`; do
-	_hosts="$_hosts$_sep\"$_h\""
-	_sep=","
-    done
-    echo "$_hosts"
 }
 
 update_host_entry() {
@@ -382,34 +251,5 @@ update_fstab_entry() {
     if [ "X$_ok" = "Xno" ]; then
 	echo "$_fs $_mnt nfs rw 0 0"
     fi
-}
-
-render_in() {
-    local _data  _line _done
-
-    _done=no
-    while [ "X$_done" = "Xno" ]; do
-	if read _line ; then
-	    :
-	else
-	    _done=yes
-	fi
-	
-	_data=`echo $_line |sed -e 's/"/\\\\"/g'`
-	eval "echo \"$_data\""
-    done
-}
-
-render_template() {
-    cat "$1"| render_in
-}
-
-render_to() {
-    local _to _tp
-
-    _to="$1"
-    _tp="$2"
-    run_cmd rm -Rf "$_to"
-    save_output "$_to" render_template "$_tp"
 }
 

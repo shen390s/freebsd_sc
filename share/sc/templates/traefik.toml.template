@@ -34,21 +34,9 @@
   [entryPoints.ssh]
     address = ":2022"
 
-  [entryPoints.tcp1]
-    address = ":3333"
+   
+%%_EXTRA_ENTRY_POINTS%%
 
-  [entryPoints.tcp2]
-    address = ":3334"
-
-  [entryPoints.tcp3]
-    address = ":3335"
-
-  [entryPoints.tcp4]
-    address = ":3336"
-
-  [entryPoints.tcp5]
-    address = ":3337"
-    
 ################################################################
 # Traefik logs configuration
 ################################################################
@@ -152,7 +140,7 @@
 [providers]
   [providers.consulCatalog]
     exposedByDefault = true
-    defaultRule = "Host(\\`{{ .Name }}.${_DATACENTER}.${_DOMAIN}\\`)"
+    defaultRule = "Host(\\`{{ .Name }}.%%_DATACENTER%%.%%_DOMAIN%%\\`)"
     stale = false
     [providers.consulCatalog.endpoint]
     address = "http://127.0.0.1:8500"

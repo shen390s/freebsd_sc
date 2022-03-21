@@ -27,7 +27,7 @@ test_config() {
     esac
     
     if [ "X$1" = "Xserver" ]; then
-	config_traefik
+	config_traefik server
     else
 	echo We need do nothing for client
     fi

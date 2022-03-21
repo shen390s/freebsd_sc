@@ -89,6 +89,8 @@ install() {
     do_patch
     
     run_cmd touch /etc/rc.local
+
+    enable_racct
     
     if cat /etc/rc.local | grep "#SC_APPLY" 2>&1 >/dev/null; then
 	:

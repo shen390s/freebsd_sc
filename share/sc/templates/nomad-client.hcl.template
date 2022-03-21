@@ -4,7 +4,7 @@
 enable_syslog = true
 syslog_facility="LOCAL1"
 
-datacenter = "${_DATACENTER}"
+datacenter = "%%_DATACENTER%%"
 
 # Setup data dir
 data_dir = "/var/nomad/data"
@@ -19,7 +19,7 @@ client {
   # For demo assume we are talking to server1. For production,
   # this should be like "nomad.service.consul:4647" and a system
   # like Consul used for service discovery.
-  servers = [ ${_SERVERS} ]
+  servers = [ %%_NOMAD_SERVERS_WITH_PORT%% ]
 }
 
 consul {
