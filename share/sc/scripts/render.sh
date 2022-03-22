@@ -22,7 +22,7 @@ render_line() {
     else
 	_z=$(echo "$_z$_comments")
     fi
-    echo $_z
+    echo $_z | sed -e 's/\^M/\n/g'
 }
 
 render_in() {
@@ -68,7 +68,16 @@ shape_server_hosts() {
 }
 
 mk_extra_entrypoints() {
-    true
+    local _it _data _n _info
+
+    _data=""
+    for _it in $TRAEFIK_EXTRA_ENTRYPOINTS; do
+	_n=$(echo $_it|awk -F: '{print $1}')
+	_info=$(echo $_it|awk -F: '{print $2}')
+	_data="$_data^M[entryPoints.${_n}]^M\taddress = \\\":${_info}\\\"^M"
+    done
+
+    echo $_data
 }
 
 

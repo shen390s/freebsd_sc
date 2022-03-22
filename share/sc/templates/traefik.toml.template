@@ -34,8 +34,7 @@
   [entryPoints.ssh]
     address = ":2022"
 
-   
-%%_EXTRA_ENTRY_POINTS%%
+  %%_EXTRA_ENTRY_POINTS%%
 
 ################################################################
 # Traefik logs configuration

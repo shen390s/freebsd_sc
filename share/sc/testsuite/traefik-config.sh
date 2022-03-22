@@ -23,6 +23,7 @@ test_config() {
 	    ;;
 	server)
 	    CLUSTER_HOSTS="$MY_NAME:1 h1:1 h2:1 h3:1"
+	    TRAEFIK_EXTRA_ENTRYPOINTS="tcp1:3313 tcp2:3314"
 	    ;;
     esac
     
