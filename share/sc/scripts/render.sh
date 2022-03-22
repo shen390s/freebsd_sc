@@ -4,10 +4,10 @@ render_line() {
     local _line _fmt _comments _data _args _cmd _z _v _val 
 
     _line="$1"
-    _data=$(echo $_line |sed -e 's/#.*$//g')
-    _comments=$(echo $_line |sed -e 's/^[^#]*#/#/g' -e 's/^[^#]*$//g')
-    _fmt=$(echo $_data |sed -e 's/"/\\"/g' | sed -e 's/%%[a-zA-Z0-9_]*%%/%s/g')
-    _args=$(echo $_data |grep -o "%%[a-zA-Z0-9_]*%%" |sed -e 's/%%//g' |xargs echo)
+    _data=$(echo "$_line" |sed -e 's/#.*$//g')
+    _comments=$(echo "$_line"|sed -e 's/^[^#]*#/#/g' -e 's/^[^#]*$//g')
+    _fmt=$(echo "$_data" |sed -e 's/"/\\"/g' | sed -e 's/%%[a-zA-Z0-9_]*%%/%s/g')
+    _args=$(echo "$_data" |grep -o "%%[a-zA-Z0-9_]*%%" |sed -e 's/%%//g' |xargs echo)
     
     _cmd="{ printf(\"$_fmt\" "
     for _v in $_args; do
@@ -22,7 +22,7 @@ render_line() {
     else
 	_z=$(echo "$_z$_comments")
     fi
-    echo $_z | sed -e 's/\^M/\n/g'
+    echo "$_z" | sed -e 's/\^M/\n/g'
 }
 
 render_in() {
@@ -30,7 +30,7 @@ render_in() {
 
     _done=no
     while [ "X$_done" = "Xno" ]; do
-	if read _line ; then
+	if IFS= read -r _line ; then
 	    :
 	else
 	    _done=yes
@@ -74,10 +74,10 @@ mk_extra_entrypoints() {
     for _it in $TRAEFIK_EXTRA_ENTRYPOINTS; do
 	_n=$(echo $_it|awk -F: '{print $1}')
 	_info=$(echo $_it|awk -F: '{print $2}')
-	_data="$_data^M[entryPoints.${_n}]^M\taddress = \\\":${_info}\\\"^M"
+	_data="$_data^M  [entryPoints.${_n}]^M    address = \\\":${_info}\\\"^M"
     done
 
-    echo $_data
+    echo "$_data"
 }
 
 

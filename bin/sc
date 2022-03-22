@@ -53,7 +53,6 @@ do_patch() {
 
 install() {
     parse_opts install "$@"
-
     if [ $? != 0 ]; then
 	usage sc
 	exit 1
@@ -109,6 +108,7 @@ apply() {
     local _role _s
 
     parse_opts apply "$@"
+    
     if [ $? != 0 ]; then
 	usage sc
 	exit 1
@@ -131,21 +131,32 @@ apply() {
 }
 
 run_test() {
-    local _tst
+    local _tst _cases _c
 
-    _tst="$TOP/share/sc/testsuite/$1.sh"
-    if [ -f "$_tst" ]; then
-	. $_tst
-	if fn_defined run_case ; then
-	    run_case "$1"
-	else
-	    echo "no test entry function: run_case has been defined"
-	    exit 2
-	fi
-    else
-	echo "test case: $1($_tst) can not be found"
-	exit 1
+    parse_opts test "$@"
+
+    if [ $? != 0 ]; then
+       usage sc
+       exit 1
     fi
+       
+    _cases="$CASES"
+
+    for _c in $_cases; do
+	_tst="$TOP/share/sc/testsuite/${_c}.sh"
+	if [ -f "$_tst" ]; then
+	    . $_tst
+	    if fn_defined run_case ; then
+		run_case "$_c"
+	    else
+		echo "no test entry function: run_case has been defined"
+		exit 2
+	    fi
+	else
+	    echo "test case: $_c($_tst) can not be found"
+	    exit 1
+	fi
+    done
 }
 
 usage() {
