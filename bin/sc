@@ -80,9 +80,13 @@ install() {
     run_cmd cp -Rf $TOP/share/sc/* /usr/local/share/sc
 
     if [ "X$CONF" != "X/usr/local/etc/sc/sc.conf" ]; then
-	run_cmd rm -Rf /usr/local/etc/sc/sc.conf 2>/dev/null
-	save_output /usr/local/etc/sc/sc.conf cat $CONF
-	save_output /usr/local/etc/sc/sc.conf echo "NETIF=$NETIF"
+	save_output /usr/local/etc/sc/sc.conf.new cat $CONF
+	save_output /usr/local/etc/sc/sc.conf.new echo "NETIF=$NETIF"
+
+	if [ -f /usr/local/etc/sc/sc.conf.new ]; then
+	    run_cmd mv /usr/local/etc/sc/sc.conf.new \
+		    /usr/local/etc/sc/sc.conf
+	fi
     fi
 
     do_patch

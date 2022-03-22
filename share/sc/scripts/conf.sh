@@ -110,7 +110,7 @@ update_host_entry() {
 update_hosts() {
     local _host _ip _item _cmd_pre _cmd _sep
 
-    _cmd_pre="touch /etc/hosts && cp /etc/hosts /etc/hosts.old && cat /etc/hosts.old"
+    _cmd_pre="touch /etc/hosts && cat /etc/hosts"
     _cmd=""
     _sep=""
     for _item in $*; do
@@ -121,81 +121,10 @@ update_hosts() {
     done
 
     if [ ! -z "$_cmd" ]; then
-	if [ -f /etc/hosts ]; then
-	    run_cmd mv /etc/hosts /etc/hosts.1
+	save_output /etc/hosts.new eval "$_cmd_pre | $_cmd"
+	if [ -f /etc/hosts.new ]; then
+	    run_cmd mv /etc/hosts.new /etc/hosts 
 	fi
-	
-	save_output /etc/hosts eval "$_cmd_pre | $_cmd"
-	if [ -f /etc/hosts ]; then
-	    run_cmd rm -Rf /etc/hosts.1
-	else
-	    run_cmd cp /etc/hosts.1 /etc/hosts
-	fi
-    fi
-
-    if [ -f /etc/hosts ]; then
-	if [ -f /etc/hosts.old ]; then
-	    rm -Rf /etc/hosts.old
-	fi
-    else
-	if [ -f /etc/hosts.old ]; then
-	    mv /etc/hosts.old /etc/hosts
-	fi
-    fi
-}
-
-update_fstab_entry() {
-    local _line _fs1 _fs _mnt1 _mnt _break _ok _data _comments
-
-    _fs="$1"
-    _mnt="$2"
-
-    _break=no
-    _ok=no
-
-    while :; do
-	if IFS= read -r _line ; then
-	    :
-	else
-	    _break=yes
-	fi
-
-	if [ ! -z "$_line" ]; then
-	    _data=`echo $_line | sed -e 's/#.*$//g'`
-	    if [ -z "$_data" ]; then
-		echo "$_line"
-	    else
-		_comments=`echo $_line | sed -e 's/^[^#]*$//g' -e '/^$/d' -e 's/^[^#]*#/#/g'`
-
-		_fs1=`echo $_data |awk '{print $1}'`
-		_mnt1=`echo $_data | awk '{print $2}'`
-
-		if [ "X$_fs1" = "X$_fs" ]; then
-		    if [ "X$_mnt1" = "X$_mnt" ]; then
-			_ok=yes
-		    fi
-		    echo "$_line"
-		else
-		    if [ "X$_mnt1" = "X$_mnt" ]; then
-			# FIXME: conflict mount point
-			echo "# FIXME: please edit following line"
-			echo "# $_line"
-			echo "$_fs $_mnt nfs rw 0 0"
-			_ok=yes
-		    else
-			echo "$_line"
-		    fi
-		fi
-	    fi
-	fi
-
-	if [ "X$_break" = "Xyes" ]; then
-	    break
-	fi
-    done
-
-    if [ "X$_ok" = "Xno" ]; then
-	echo "$_fs $_mnt nfs rw 0 0"
     fi
 }
 

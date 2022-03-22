@@ -96,8 +96,7 @@ exclude_from_list() {
 enable_racct() {
     local _sfile
     
-    cp /boot/loader.conf /boot/loader.conf.old
-    _sfile=`mktemp -q /tmp/.XXXXX.awk`
+    _sfile=`mktemp -q /tmp/awk.XXXX`
     if [ $? -ne 0 ]; then
 	return
     fi
@@ -122,15 +121,13 @@ END {
 }
 EOF
     
-    save_output /boot/loader.conf \
-		awk -f $_sfile /boot/loader.conf.old
+    save_output /boot/loader.conf.new \
+		awk -f $_sfile /boot/loader.conf
 
-    if [ -f /boot/loader.conf.old ]; then
-	if [ -f /boot/loader.conf ]; then
-	    rm -Rf /boot/loader.conf.old
-	else
-	    mv /boot/loader.conf.old
-	fi
+    run_cmd rm -Rf $_sfile
+    
+    if [ -f /boot/loader.conf.new ]; then
+	run_cmd mv /boot/loader.conf.new /boot/loader.conf
     fi
 }
 

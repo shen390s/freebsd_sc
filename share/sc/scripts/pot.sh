@@ -25,8 +25,8 @@ pot_patch() {
 	_t=`basename $_p | sed -e 's/.diff/.patched/g'`
 
 	if [ ! -f /usr/local/share/pot/.$_t ]; then
-	    patch -d /usr/local/share/pot < $_p
-	    touch /usr/local/share/pot/.$_t
+	    run_cmd patch -d /usr/local/share/pot < $_p
+	    run_cmd touch /usr/local/share/pot/.$_t
 	fi
     done
 }
@@ -60,12 +60,11 @@ update_jails_conf() {
 	_ip=`echo $_ip |awk -F. '{print $4}'`
 	_ip="10.${_idx1}.${_idx2}.${_ip}"
 
-	run_cmd mv  $_f ${_f}.old
-	save_output $_f eval "cat ${_f}.old |grep -E -v '^ip='"
-	save_output $_f echo "ip=${_ip}"
+	save_output ${_f}.new  eval "cat ${_f} |grep -E -v '^ip='"
+	save_output ${_f}.new echo "ip=${_ip}"
 
-	if [ -f ${_f}.old ]; then
-	    rm -Rf ${_f}.old
+	if [ -f ${_f}.new ]; then
+	    run_cmd mv  ${_f}.new $_f
 	fi
     done
 }
@@ -95,13 +94,11 @@ config_pot() {
 
     _f=/usr/local/etc/pot/pot.conf
     
-    run_cmd cp $_f ${_f}.old
+    save_output ${_f}.new  eval "cat $_f |grep -E -v '^(POT_NETWORK|POT_GATEWAY|POT_DNS_IP)='"
+    save_output ${_f}.new pot_conf_data
 
-    save_output $_f eval "cat $_f.old |grep -E -v '^(POT_NETWORK|POT_GATEWAY|POT_DNS_IP)='"
-    save_output $_f pot_conf_data
-
-    if [ -f ${_f}.old ]; then
-	rm -Rf ${_f}.old
+    if [ -f ${_f}.new ]; then
+	run_cmd mv ${_f}.new $_f
     fi
     
     update_jails_conf
