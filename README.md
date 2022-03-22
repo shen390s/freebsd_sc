@@ -15,6 +15,8 @@ This is a tool to build a freebsd service cluster
 
 5. Use FreeBSD jail management tool(pot) to manage service jail
 
+6. Use vxlan to connect jails inside cluster
+
 * Usage
 
 1. get help
@@ -33,10 +35,19 @@ See examples at examples/conf/cluster.conf
 for each hosts in the cluster, run:
 
 ```sh
-./bin/sc apply -c examples/conf/cluster.conf -i em0
+./bin/sc install  -c examples/conf/cluster.conf -i em0
 ```
 
 - em0 is the netif used by consul/nomad/traefik
+
+2.3 update configuration
+
+Please edit configuration file /usr/local/etc/sc/sc.conf then:
+
+```sh
+sc apply
+sc start
+```
 
 3. build jail image of service
 
