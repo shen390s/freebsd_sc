@@ -1,0 +1,80 @@
+job "gitea" {
+  region = "global"
+  datacenters = ["dc1"]
+  type        = "service"
+
+  group "group1" {
+    count = 1
+
+    network {
+      port "gitea" {}
+      port "gitssh" {}
+    }
+
+    task "gitea" {
+      driver = "pot"
+
+      service {
+        tags = ["pot-jail",
+                "metrics",
+                "gitea",
+                "traefik.enable=true",
+                "traefik.http.routers.gitea.rule=Host(`gitea.dc1.shenrs.eu`)"
+        ]
+        name = "gitea"
+        port = "gitea"
+
+         check {
+            type     = "tcp"
+            name     = "gitea"
+            interval = "10s"
+            timeout  = "20s"
+          }
+      }
+
+      service {
+         tags = ["pot-jail",
+                "metrics",
+                "gitssh",
+                "traefik.tcp.routers.gitssh",
+                "traefik.tcp.routers.gitssh.entryPoints=giteassh",
+                "traefik.tcp.routers.gitssh.rule=HostSNI(`*`)"
+        ]
+
+        name = "gitssh"
+        port = "gitssh"
+        
+        check {
+            type     = "tcp"
+            name     = "gitssh"
+            interval = "10s"
+            timeout  = "20s"
+        }
+      }
+
+      env {
+          datacenter = "dc1"
+          domain = "shenrs.eu"
+      }
+
+      config {
+        image = "file:///data/images/gitea/"
+        pot = "gitea"
+        tag = "1.0"
+        command = "/data/tools/gitea/start"
+        args = []
+        port_map = {
+          gitssh = "3022"
+          gitea = "3000"
+        }
+        network_mode = "public-bridge"
+        mount = ["/data/store:/data" ]
+      }
+
+      resources {
+        cpu = 200
+        memory = 1600
+      }
+    }
+  }
+}

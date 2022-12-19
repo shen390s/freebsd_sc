@@ -1,0 +1,19 @@
+import_svcs() {
+    local _dir _f
+
+    _dir="$1"
+    shift
+
+    for _f in ${_dir}/*; do
+	case "$_f" in
+	    *.sh)
+		. ${_f}
+		;;
+	    *)
+		# ignore these files
+		;;
+	esac
+    done
+}
+
+import_svcs $TOP/share/sc/sv

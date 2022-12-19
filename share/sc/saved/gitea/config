@@ -1,0 +1,1 @@
+pot exec -p gitea /data/tools/gitea/mk_conf

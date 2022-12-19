@@ -1,0 +1,11 @@
+ pot import -p postfix -t 1.0  -U /data/images/postfix/
+pot clone -p postfix -P postfix_1_0
+pot set-env -p postfix -E domain="shenrs.eu" \
+   -E dc=dc1 \
+   -E users="rshen ann apple" \
+   -E relay_servers="[relay.wiredblade.com]:2525 [relay.wiredblade.com]:25 [relay.wiredblade.com]:26" \
+   -E relay_user="relay@relay.shenrs.eu" \
+   -E relay_passwd='relay password here' \
+   -E mail_pem="/data/conf/postfix/conf/mail.relay.shenrs.eu.pem"
+pot set-attr -p postfix -A start-at-boot -V yes
+pot mount-in -p postfix -m /data -d /data/store/

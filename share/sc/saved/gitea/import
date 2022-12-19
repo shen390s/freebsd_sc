@@ -1,0 +1,5 @@
+ pot import -p gitea -t 1.0  -U /data/images/gitea/
+pot clone -p gitea -P gitea_1_0
+pot set-env -p gitea -E datacenter=dc1 -E domain="shenrs.eu"
+pot set-attr -p gitea -A start-at-boot -V yes
+pot mount-in -p gitea -m /data -d /data/store/

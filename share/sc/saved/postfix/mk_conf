@@ -1,0 +1,236 @@
+#!/bin/sh
+
+set -x
+if [ -f /tmp/environment.sh ]; then
+   . /tmp/environment.sh
+fi
+
+gen_netif() {
+  local _netifs
+  
+  _netifs="em0 re0"
+  for _idx in $(seq 0 99); do
+      _netifs="$_netifs epair${_idx}b"
+  done
+  echo "$_netifs"
+}
+
+get_ip() {
+   local _netif _ip
+
+   for _netif in $(gen_netif); do
+     _ip=$(ifconfig "$_netif" |\
+           grep inet |    \
+           head -n 1 |    \
+           awk '{print $2}')
+     if [ -z "$_ip" ]; then
+        :
+     else
+        echo "$_ip"
+        return
+     fi
+   done
+   echo
+}
+
+gen_kv_sed() {
+   local _it _cmd _k _var _v
+
+   _cmd="sed "
+   for _it in $*; do
+       _k=$(echo $_it | awk -F: '{print $1}')
+       _v=$(echo $_it | awk -F: '{print $2}')
+       _cmd="$_cmd -e \"s@%%$_k%%@\$$_v@g\" "
+   done
+
+   echo $_cmd
+}
+
+fill_kv_file() {
+   local _fsrc _fdst _sed _dir
+
+   _fsrc="$1" 
+   _fdst="$2"
+   shift 2
+
+   _sed=$(gen_kv_sed "$@")
+
+   _dir=$(dirname $_fdst)
+   if [ -z "$_dir" ]; then
+      :
+   else
+      if [ ! -d $_dir ]; then
+         mkdir -p $_dir
+      fi
+   fi
+   rm -Rf $_fdst
+   (cat $_fsrc | eval "$_sed")>$_fdst
+}
+
+list_conf() {
+   cat <<EOF
+/usr/local/etc/cyrus.conf
+/usr/local/etc/imapd.conf
+/usr/local/etc/dkimproxy_out.conf
+/usr/local/etc/postfix/main.cf
+/usr/local/etc/postfix/generic
+/usr/local/etc/postfix/master.cf
+/usr/local/etc/postfix/mail.relay.shenrs.eu.pem
+EOF
+}
+
+mk_conf_files() {
+   local _fsrc _fdst _f _sdir
+
+   my_ip=$(get_ip)
+   my_fqdn=postfix.$dc.$domain
+   top=/data/data/postfix
+   myhostname=$(hostname)
+
+   _sdir=/data/conf/postfix/conf/
+   for _fdst in $(list_conf); do
+      _f=$(basename $_fdst)
+      _fsrc=$_sdir/$_f
+      if [ -f $_fsrc ]; then
+          fill_kv_file $_fsrc $_fdst \
+                MY_DOMAIN:domain \
+                MY_FQDN:my_fqdn \
+                MY_IP:my_ip \
+                DATACENTER:dc \
+                RELAY_SERVER:relay_servers \
+	        TOP:top MYHOSTNAME:myhostname 
+      fi
+   done 
+
+   for _d in $top/var/imap $top/var/spool/imap $top/var/imap/sieve $top/var/imap/socket $top/var/imap/db ; do
+       if [ ! -d $_d ]; then
+           mkdir -p $_d
+       fi
+
+       chown -Rf cyrus:cyrus $_d
+   done
+
+   for _d in $top/var/spool/postfix $top/var/db/postfix; do
+       if [ ! -d $_d ]; then
+          mkdir -p $_d
+       fi
+
+       case $_d in
+         *spool/postfix)
+              chown -Rf root:wheel $_d
+              ;;
+         *)
+              chown -Rf postfix:postfix $_d
+              ;;
+       esac
+   done
+
+   mk_relay
+
+   mk_sendmap
+   update_postmaps 
+   mk_aliases
+}
+
+mk_relay() {
+   local _s _relay_passwd_file
+
+   _relay_passwd_file=/usr/local/etc/postfix/sasl_passwd
+   rm -Rf $_relay_passwd_file
+   touch $_relay_passwd_file
+   for _s in $relay_servers; do
+       echo "$_s $relay_user:$relay_passwd" >>$_relay_passwd_file
+   done
+}
+
+mk_sendmap() {
+   local _senders _m _s
+
+   _senders="$@"
+   _m="/usr/local/etc/postfix/sasl_senders"
+
+   rm -Rf $_m
+   touch $_m
+
+   for _s in $_senders; do
+       echo "$_s@$domain $_s" >>$_m
+   done
+}
+
+update_postmaps() {
+   local _f
+
+   for _f in generic sasl_passwd sasl_senders; do
+       postmap /usr/local/etc/postfix/$_f
+   done
+}
+
+mk_aliases() {
+   postalias /data/conf/postfix/conf/aliases && mv /data/conf/postfix/conf/aliases.db /etc/mail 
+}
+
+mk_imap_dirs() {
+   local _dirs _d
+
+   _dirs="/var/imap/socket /var/imap/sync "
+
+   for _d in $_dirs; do
+      mkdir -p $_d
+   done
+
+   chown -Rf cyrus:cyrus /var/imap
+}
+
+mk_opiekeys() {
+    touch /etc/opiekeys
+
+    chown -Rf cyrus:cyrus /etc/opiekeys
+}
+
+setup_imapd() {
+   mk_imap_dirs
+   mk_opiekeys
+}
+
+mk_mail_boxes() {
+   local _cyrus_pass _users _u
+
+   _cyrus_pass="aaa123"
+   _users="$users"
+
+   if [ ! -f /data/data/postfix/sasldb2.db ]; then
+      /data/tools/postfix/chpasswd /data/data/postfix/sasldb2 cyrus@$domain "$_cyrus_pass"
+   fi
+
+   for _u in $_users; do 
+       /data/tools/postfix/chpasswd /data/data/postfix/sasldb2 $_u@$domain "$_cyrus_pass"
+   done
+
+   unlink /usr/local/etc/sasldb2.db
+   ln -s /data/data/postfix/sasldb2.db /usr/local/etc
+
+   sysrc saslauthd_enable="YES"
+   service saslauthd restart
+
+   /data/tools/postfix/addmailuser cyrus@$domain "$_cyrus_pass" \
+      $users
+}
+
+
+mk_conf() {
+   mk_conf_files
+   sysrc postfix_enable="YES"
+   chown -Rf postfix:postfix /data/data/postfix/var/spool/postfix
+   postfix set-permissions
+   service postfix restart
+   sysrc dkimproxy_out_enable="YES"
+   service dkimproxy_out restart
+
+   setup_imapd
+   sysrc cyrus_imapd_enable="YES"
+   service imapd restart
+
+   mk_mail_boxes
+}
+
+mk_conf

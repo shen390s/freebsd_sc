@@ -1,0 +1,3 @@
+pot snapshot -p gitea
+pot export -p gitea -t 1.0 
+

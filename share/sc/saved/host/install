@@ -1,0 +1,36 @@
+#!/bin/sh
+
+mk_fstab_config() {
+    cat <<EOF
+192.168.1.3:/tank/datastore /data/store  nfs     rw             0       0
+192.168.1.3:/tankX/imagestore /data/images nfs   rw             0       0
+EOF
+}
+
+mk_boot_config() {
+    echo "kern.racct.enable=1"
+}
+
+enable_service() {
+   sysrc rpc_lockd_enable="YES"
+   sysrc rpc_statd_enable="YES"
+   sysrc pot_enable="YES"
+}
+
+install_pkgs() {
+   pkg install -y pot nomad nomad-pot-driver \
+       sudo fish
+
+   pot init
+   pot vnet-start
+}
+
+install() {
+   install_pkgs
+   mk_fstab_config >>/etc/fstab
+   mk_boot_config >>/boot/loader.conf
+   enable_service
+}
+
+install
+reboot

@@ -1,0 +1,7 @@
+#! /bin/sh
+
+/data/tools/gitea/mk_conf
+
+service sshd start
+
+su git -c "GITEA_CUSTOM=/data/data/gitea GITEA_WORK_DIR=/usr/local/share/gitea gitea web"

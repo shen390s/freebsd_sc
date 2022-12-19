@@ -1,219 +1,74 @@
 #!/bin/sh
 
-_appdir=`dirname $0`
-TOP=`cd $_appdir/.. && pwd`
-_conf="$1"
-
-. $TOP/share/sc/scripts/common.sh
-. $TOP/share/sc/scripts/carp.sh
-. $TOP/share/sc/scripts/hosts.sh
-. $TOP/share/sc/scripts/consul.sh
-. $TOP/share/sc/scripts/fs.sh
-. $TOP/share/sc/scripts/nomad.sh
-. $TOP/share/sc/scripts/pot.sh
-. $TOP/share/sc/scripts/traefik.sh
-
-# load default configuration settings
-. $TOP/etc/sc/default.conf
-
-CONF=/usr/local/etc/sc/sc.conf
-
-load_conf() {
-    local _conf
-
-    _conf="$1"
-    test ! -z "$_conf" && \
-	test -f $_conf && \
-	. $_conf
-}
-
-get_role() {
-    local _all_hosts _role
-    
-    _all_hosts=`get_all_hosts`
-    if ! name_in_list `hostname` $_all_hosts; then
-	_role=none
-    elif is_server; then
-	_role=server
-    else
-	_role=client
-    fi
-    echo $_role
-}
-
-do_patch() {
-    local _s
-
-    for _s in consul nomad pot; do
-	if fn_defined "${_s}_patch" ; then
-	    eval "${_s}_patch"
-	fi
-    done
-}
-
-install() {
-    parse_opts install "$@"
-    if [ $? != 0 ]; then
-	usage sc
-	exit 1
-    fi
-
-    load_conf "$CONF"
-
-    if [ ! -d /usr/local/bin ]; then
-	run_cmd mkdir -p /usr/local/bin
-    fi
-    
-    run_cmd cp $TOP/bin/sc /usr/local/bin 
-
-    if [ ! -d /usr/local/etc/sc ]; then
-	run_cmd mkdir -p /usr/local/etc/sc
-    fi
-
-    run_cmd cp $TOP/etc/sc/default.conf /usr/local/etc/sc
-    run_cmd cp $CONF /usr/local/etc/sc 
-
-    if [ ! -d /usr/local/share/sc ]; then
-	run_cmd mkdir -p /usr/local/share/sc
-    fi
-
-    run_cmd cp -Rf $TOP/share/sc/* /usr/local/share/sc
-
-    if [ "X$CONF" != "X/usr/local/etc/sc/sc.conf" ]; then
-	save_output /usr/local/etc/sc/sc.conf.new cat $CONF
-	save_output /usr/local/etc/sc/sc.conf.new echo "NETIF=$NETIF"
-
-	if [ -f /usr/local/etc/sc/sc.conf.new ]; then
-	    run_cmd mv /usr/local/etc/sc/sc.conf.new \
-		    /usr/local/etc/sc/sc.conf
-	fi
-    fi
-
-    do_patch
-    
-    run_cmd touch /etc/rc.local
-
-    enable_racct
-    
-    if cat /etc/rc.local | grep "#SC_APPLY" 2>&1 >/dev/null; then
-	:
-    else
-	save_output /etc/rc.local echo "/usr/local/bin/sc apply \#SC_APPLY"
-    fi
-
-    if cat /etc/rc.local | grep  "#SC_START" 2>&1 >/dev/null; then
-	:
-    else
-	save_output /etc/rc.local echo "/usr/local/bin/sc start \#SC_START"
-    fi
-}
-
-apply() {
-    local _role _s
-
-    parse_opts apply "$@"
-    
-    if [ $? != 0 ]; then
-	usage sc
-	exit 1
-    fi
-
-    echo "Using conf $CONF netif $NETIF "
-    load_conf "$CONF"
-
-    _role=`get_role`
-    for _s in hosts fs carp consul nomad pot traefik; do
-	if fn_defined "${_s}_apply"; then
-	    eval "${_s}_apply $_role"
-	    if [ $? != 0 ]; then
-		echo "${_s}_apply $_role failed"
-		exit 2
-	    fi
-	fi
-    done
-
-}
-
-run_test() {
-    local _tst _cases _c
-
-    parse_opts test "$@"
-
-    if [ $? != 0 ]; then
-       usage sc
-       exit 1
-    fi
-       
-    _cases="$CASES"
-
-    for _c in $_cases; do
-	_tst="$TOP/share/sc/testsuite/${_c}.sh"
-	if [ -f "$_tst" ]; then
-	    . $_tst
-	    if fn_defined run_case ; then
-		run_case "$_c"
-	    else
-		echo "no test entry function: run_case has been defined"
-		exit 2
-	    fi
-	else
-	    echo "test case: $_c($_tst) can not be found"
-	    exit 1
-	fi
-    done
-}
-
-usage() {
-    echo "usage: $1"
-    echo "      $1 install [ -c config] [ -i netif] [ -n ]"
-    echo "      $1 uninstall [ -n ]"
-    echo "      $1 start [ -n ]"
-    echo "      $1 apply  [ -n ]"
-    echo "      $1 test <testcase> (in testsuite directory)"
-    echo "      usage (show this help)"
-    echo
-    echo "      1. config is the configuration file. see examples/conf/cluster.conf"
-    echo "      2. netif is the network interface(default is em0)"
-    echo "      3. -n turn on dry run mode(Just show what works which will be done)"
-    echo "      4. If you have changed the configuration of cluster(/usr/local/etc/sc/sc.conf)"
-    echo "         please run sc apply && sc start to apply the change or reboot system"
-    return 1
-}
-
-start() {
-    local _s _role
-
-    load_conf "$CONF"
-
-    _role=`get_role`
-
-    for _s in hosts carp fs consul nomad traefik pot; do
-	if fn_defined "${_s}_start"; then
-	    eval "${_s}_start $_role"
-	fi
-    done
-}
+APP=$(basename $0)
+_appdir=$(dirname $0)
+TOP=$(realpath $(cd $_appdir/.. && pwd))
 
 action="$1"
 shift
 
+export APP TOP
+
+. $TOP/share/sc/lib/funcs
+. $TOP/share/sc/sv/svcs
+
+build() {
+    local _role _xfile
+
+    _role="$1"
+    shift 1
+    _xfile="$TOP/share/sc/roles/$_role/config"
+
+    if [ -f "$_xfile" ]; then
+	. "$_xfile" 
+	build_image "$_role"
+    else
+	cat <<EOF
+$_xfile can not be found.
+EOF
+	exit 1
+    fi
+	
+}
+
+deploy() {
+    local _role _job
+
+    _role="$1"
+    shift 1
+
+    _job="$TOP/share/sc/jobs/${_role}.job"
+    if [ -f "$_job" ]; then
+	nomad run "$_job"
+    else
+	cat <<EOF
+nomad job "$_job" can not be found
+EOF
+    fi
+}
+
+help() {
+    cat <<EOF
+usage: $APP command options
+       commands:
+            - build host
+            - build jail roles(gitea/login/postix/seafile)
+	    - deploy jail roles
+EOF
+}
+
 case $action in
-    install)
-	install "$@"
+    build)
+	build "$@"
 	;;
-    start)
-	start "$@"
-	;;
-    apply)
-	apply "$@"
-	;;
-    test)
-	run_test "$@"
+    deploy)
+	deploy "$@"
 	;;
     help)
-	usage sc
+	help
 	;;
     *)
-	usage sc
+	help
 	;;
 esac
+    

@@ -1,0 +1,3 @@
+pot create -p gitea -N public-bridge -t single -b 13.1
+pot start gitea
+pkg install -y gitea bash

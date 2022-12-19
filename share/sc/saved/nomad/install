@@ -1,0 +1,1 @@
+pkg install -y nomad nomad-pot-driver

@@ -1,0 +1,7 @@
+#! /bin/sh
+
+/data/tools/login/mk_conf
+
+service sshd start
+/usr/local/bin/ttyd login
+

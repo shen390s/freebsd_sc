@@ -1,0 +1,88 @@
+job "seafile" {
+  region = "global"
+  datacenters = ["dc1"]
+  type        = "service"
+
+  group "group1" {
+    count = 1
+
+    network {
+      port "seafile" {}
+      port "seahub" {}
+    }
+
+    task "seafile" {
+      driver = "pot"
+
+      service {
+        tags = ["pot-jail",
+                "metrics",
+                "seafile",
+                "traefik.enable=true",
+                "traefik.http.routers.seafile.entryPoints=seafile",
+                "traefik.http.routers.seafile.rule=Host(`seafile.dc1.shenrs.eu`)"
+        ]
+        name = "seafile"
+        port = "seafile"
+
+         check {
+            type     = "tcp"
+            name     = "seafile"
+            interval = "10s"
+            timeout  = "20s"
+          }
+      }
+
+      service {
+         tags = ["pot-jail",
+                "metrics",
+                "seahub",
+                "traefik.enable=true",
+		"traefik.http.routers.seahub.entryPoints=http",
+                "traefik.http.routers.seahub.rule=Host(`seafile.dc1.shenrs.eu`)"
+        ]
+
+        name = "seahub"
+        port = "seahub"
+        
+        check {
+            type     = "tcp"
+            name     = "seahub"
+            interval = "10s"
+            timeout  = "20s"
+        }
+      }
+
+      env {
+          datacenter = "dc1"
+          domain = "shenrs.eu"
+      }
+
+      template {
+         data = <<EOH
+datacenter="dc1"
+domain="shenrs.eu"
+EOH
+         destination = "/local/environment.sh"
+      }
+      config {
+        image = "file:///data/images/seafile/"
+        pot = "seafile"
+        tag = "1.5"
+        command = "/data/tools/seafile/start"
+        args = []
+        port_map = {
+          seafile = "8082"
+          seahub = "8080"
+        }
+        network_mode = "public-bridge"
+        mount = ["/data/store:/data" ]
+      }
+
+      resources {
+        cpu = 200
+        memory = 4096
+      }
+    }
+  }
+}

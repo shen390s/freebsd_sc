@@ -1,0 +1,170 @@
+job "postfix" {
+  region = "global"
+  datacenters = ["dc1"]
+  type        = "service"
+
+  group "group1" {
+    count = 1
+
+    network {
+      port "smtp" {
+         static = 25
+      }
+      port "pop3" {
+         static = 110
+      }
+      port "pop3s" {
+         static = 995
+      }
+      port "imap" {
+         static = 143
+      }
+      port "imaps" {
+         static = 993
+      }
+    }
+
+    task "postfix" {
+      driver = "pot"
+
+      service {
+        tags = ["pot-jail",
+                "metrics",
+                "smtp",
+                "traefik.enable=true",
+                "traefik.tcp.routers.smtp.entrypoints=smtp",
+		"traefik.tcp.routers.smtp.rule=HostSNI(`*`)"
+        ]
+        name = "smtp"
+        port = "smtp"
+
+         check {
+            type     = "tcp"
+            name     = "smtp"
+            interval = "10s"
+            timeout  = "20s"
+          }
+      }
+
+
+      service {
+          tags = ["pot-jail",
+                  "metrics",
+                  "pop3",
+                  "traefik.enable=true",
+                  "traefik.tcp.routers.pop3.entrypoints=pop3",
+                  "traefik.tcp.routers.pop3.rule=HostSNI(`*`)"
+          ]
+         name = "pop3"
+         port = "pop3"
+         check {
+              type = "tcp"
+              name = "pop3"
+              interval = "10s"
+              timeout = "20s"
+         }
+      }
+
+      service {
+          tags = ["pot-jail",
+                  "metrics",
+                  "pop3s",
+                  "traefik.enable=true",
+                  "traefik.tcp.routers.pop3s.entrypoints=pop3s",
+                  "traefik.tcp.routers.pop3s.rule=HostSNI(`*`)"
+          ]
+         name = "pop3s"
+         port = "pop3s"
+         check {
+              type = "tcp"
+              name = "pop3s"
+              interval = "10s"
+              timeout = "20s"
+         }
+      }
+
+      service {
+          tags = ["pot-jail",
+                  "metrics",
+                  "imap",
+                  "traefik.enable=true",
+                  "traefik.tcp.routers.imap.entrypoints=imap",
+                  "traefik.tcp.routers.imap.rule=HostSNI(`*`)"
+          ]
+         name = "imap"
+         port = "imap"
+         check {
+              type = "tcp"
+              name = "imap"
+              interval = "10s"
+              timeout = "20s"
+         }
+      }
+
+      service {
+          tags = ["pot-jail",
+                  "metrics",
+                  "imaps",
+                  "traefik.enable=true",
+                  "traefik.tcp.routers.imaps.entrypoints=imaps",
+                  "traefik.tcp.routers.imaps.rule=HostSNI(`*`)"
+          ]
+         name = "imaps"
+         port = "imaps"
+         check {
+              type = "tcp"
+              name = "imaps"
+              interval = "10s"
+              timeout = "20s"
+         }
+      }
+
+#      env {
+#        dc = "dc1"
+#        domain = "shenrs.eu"
+#        users = "rshen ann apple"
+#        relay_servers = "[relay.wiredblade.com]:2525 [relay.wiredblade.com]:25 [relay.wiredblade.com]:26"
+#        relay_user = "relay@relay.shenrs.eu"
+#        relay_passwd = "password here"
+#        mail_pem = "/data/conf/postfix/conf/mail.relay.shenrs.eu.pem"
+#      }
+      template {
+         data = <<EOH
+dc="dc1"
+domain="shenrs.eu"
+users="rshen ann apple"
+relay_servers="[relay.wiredblade.com]:2525 [relay.wiredblade.com]:25 [relay.wiredblade.com]:26"
+relay_user="relay@relay.shenrs.eu"
+relay_passwd="password here"
+mail_pem="/data/conf/postfix/conf/mail.relay.shenrs.eu.pem"
+EOH
+         
+         destination = "/local/environment.sh" 
+#         env = true
+      }
+
+      config {
+        image = "file:///data/images/postfix/"
+        pot = "postfix"
+        tag = "1.0"
+        command = "/data/tools/postfix/start"
+        args = []
+#        port_map = {
+#            smtp = "25"
+#            pop3 = "110"
+#            imap = "143"
+#            imaps = "993"
+#            pop3s = "995"
+#        }
+#        network_mode = "public-bridge"
+        network_mode = "host"
+        mount = ["/data/store:/data" ]
+      }
+
+      resources {
+        cpu = 200
+        memory = 1024
+      }
+    }
+  }
+}

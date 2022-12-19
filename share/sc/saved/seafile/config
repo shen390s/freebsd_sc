@@ -1,0 +1,7 @@
+pot exec -p seafile sysrc sendmail_enable="NONE"
+pot exec -p seafile /data/tools/seafile/mk_conf
+
+# reset admin
+# fix seafile port
+# add memcached
+

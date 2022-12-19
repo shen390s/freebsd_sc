@@ -1,0 +1,76 @@
+job "login" {
+  region = "global"
+  datacenters = ["dc1"]
+  type        = "service"
+
+  group "group1" {
+    count = 1
+
+    network {
+      port "ssh" {}
+      port "ttyd" {}
+    }
+
+    task "login" {
+      driver = "pot"
+
+      service {
+        tags = ["pot-jail",
+                "metrics",
+                "login",
+                "traefik.enable=true",
+                "traefik.tcp.routers.r1",
+                "traefik.tcp.routers.r1.entryPoints=login",
+		"traefik.tcp.routers.r1.rule=HostSNI(`*`)"
+        ]
+        name = "login"
+        port = "ssh"
+
+         check {
+            type     = "tcp"
+            name     = "ssh"
+            interval = "10s"
+            timeout  = "20s"
+          }
+      }
+
+
+      service {
+          tags = ["pot-jail",
+                  "metrics",
+                  "ttyd",
+                  "traefik.enable=true",
+                  "traefik.http.routers.ttyd.rule=Host(`login.dc1.shenrs.eu`)"
+          ]
+         name = "ttyd"
+         port = "ttyd"
+         check {
+              type = "tcp"
+              name = "ttyd"
+              interval = "10s"
+              timeout = "20s"
+         }
+      }
+
+      config {
+        image = "file:///data/images/login/"
+        pot = "login"
+        tag = "1.4"
+        command = "/data/tools/login/start"
+        args = []
+        port_map = {
+          ssh = "22"
+          ttyd = "7681"
+        }
+        network_mode = "public-bridge"
+#        network_mode = "host"
+        mount = ["/data/store:/data" ]
+      }
+
+      resources {
+        cpu = 200
+        memory = 100
+      }
+    }
+  }
+}

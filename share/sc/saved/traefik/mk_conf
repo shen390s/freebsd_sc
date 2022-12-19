@@ -1,0 +1,206 @@
+#!/bin/sh
+
+if [ -f /tmp/environment.sh ]; then
+   . /tmp/environment.sh
+fi
+
+get_ip() {
+   _ifs="$1"
+
+   if [ -z "$_ifs" ]; then
+      _ifs="em0 re0"
+   fi
+
+   for _if in $_ifs; do
+      _ip=$(ifconfig "$_if" 2>/dev/null | grep inet | head -n 1 | awk '{print $2}')
+      if [ -z "$_ip"  ]; then
+          :
+      else
+          echo $_ip
+          return
+      fi
+   done
+}
+
+mk_entry_point() {
+   local _name _port
+   _name="$1"
+   _port="$2"
+   echo 
+   cat <<EOF
+  [entryPoints.$_name]
+    address = ":$_port"
+EOF
+}
+
+mk_entryPoints() {
+   local _name _port
+   for _it in $entryPoints; do
+       _name=$(echo $_it|awk -F: '{print $1}')
+       _port=$(echo $_it|awk -F: '{print $2}')
+       mk_entry_point $_name $_port
+   done
+}
+
+mk_config_data() {
+  my_ip=$(get_ip)
+  cat <<EOF
+################################################################
+#
+# Configuration sample for Traefik v2.
+#
+# For Traefik v1: https://github.com/traefik/traefik/blob/v1.7/traefik.sample.toml
+#
+################################################################
+
+################################################################
+# Global configuration
+################################################################
+[global]
+  checkNewVersion = true
+  sendAnonymousUsage = true
+
+################################################################
+# Entrypoints configuration
+################################################################
+
+# Entrypoints definition
+#
+# Optional
+# Default:
+[entryPoints]
+  [entryPoints.traefik]
+    address = ":9002"
+
+  [entryPoints.websecure]
+    address = ":9443"
+
+  [entryPoints.http]
+    address = ":8080"
+
+  $(mk_entryPoints)
+################################################################
+# Traefik logs configuration
+################################################################
+
+# Traefik logs
+# Enabled by default and log to stdout
+#
+# Optional
+#
+[log]
+
+  # Log level
+  #
+  # Optional
+  # Default: "ERROR"
+  #
+  level = "DEBUG"
+
+  # Sets the filepath for the traefik log. If not specified, stdout will be used.
+  # Intermediate directories are created if necessary.
+  #
+  # Optional
+  # Default: os.Stdout
+  #
+  filePath = "/var/log/traefik.log"
+
+  # Format is either "json" or "common".
+  #
+  # Optional
+  # Default: "common"
+  #
+  # format = "json"
+
+################################################################
+# Access logs configuration
+################################################################
+
+# Enable access logs
+# By default it will write to stdout and produce logs in the textual
+# Common Log Format (CLF), extended with additional fields.
+#
+# Optional
+#
+[accessLog]
+
+  # Sets the file path for the access log. If not specified, stdout will be used.
+  # Intermediate directories are created if necessary.
+  #
+  # Optional
+  # Default: os.Stdout
+  #
+  # filePath = "/path/to/log/log.txt"
+  filePath = "/var/log/traefik-access.log"
+
+  # Format is either "json" or "common".
+  #
+  # Optional
+  # Default: "common"
+  #
+  # format = "json"
+
+################################################################
+# API and dashboard configuration
+################################################################
+
+# Enable API and dashboard
+[api]
+
+  # Enable the API in insecure mode
+  #
+  # Optional
+  # Default: false
+  #
+  insecure = true
+
+  # Enabled Dashboard
+  #
+  # Optional
+  # Default: true
+  #
+  # dashboard = false
+
+################################################################
+# Ping configuration
+################################################################
+
+# Enable ping
+[ping]
+
+  # Name of the related entry point
+  #
+  # Optional
+  # Default: "traefik"
+  #
+  # entryPoint = "traefik"
+
+################################################################
+# Docker configuration backend
+################################################################
+
+[providers]
+  [providers.consulCatalog]
+    exposedByDefault = true
+    defaultRule = "Host(\`{{ .Name }}.$datacenter.$domain\`)"
+    stale = false
+    [providers.consulCatalog.endpoint]
+    address = "http://$my_ip:8500"
+EOF
+}
+
+mk_traefik_conf() {
+    _traefik_conf=/usr/local/etc/traefik.toml
+    
+    if [ -f $_traefik_conf ]; then
+       mv $_traefik_conf $_traefik_conf.old
+    fi
+
+    mk_config_data >$_traefik_conf
+    sysrc traefik_enable="YES"    
+    sysrc traefik_conf="$_traefik_conf"
+    sysrc sendmail_enable="NONE"
+}
+
+mk_traefik_conf
+service traefik restart

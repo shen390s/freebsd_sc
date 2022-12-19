@@ -1,0 +1,80 @@
+#! /bin/sh
+
+_conf_dir=/data/conf/login
+
+xchmod()
+{
+    local _mode _file
+    _mode="$1"
+    _file="$2"
+
+    if [ -d "$_file" -o -f "$_file" ]; then
+        chmod $_mode "$_file"
+    fi
+}
+
+user_home() {
+    cat /etc/passwd |grep ^$1: | awk  -F: '{print $6}'
+}
+
+user_group() {
+    local _user _group _z1 _gid _grp
+
+    _user="$1"
+    _z1=`printf '{ if ( $1 == "%s" ) print $4}' $_user`
+    _gid=`cat /etc/passwd | awk -F: "$_z1"`
+    _z1=`printf '{ if ( $3 == "%s" ) print $1}' $_gid`
+    _grp=`cat /etc/group | awk -F: "$_z1"`
+
+    if [ -z "$_grp" ]; then
+        echo $_user
+    else
+        echo $_grp
+    fi
+}
+
+setup_user_keys() {
+    local _user _home _f _dir _grp
+
+    _user="$1"
+    _home=`user_home $_user`
+
+    if [ ! -d $_home/.ssh ]; then
+        mkdir -p $_home/.ssh
+    fi
+
+    _dir=$_conf_dir/$_user
+    for _f in id_rsa id_rsa.pub authorized_keys; do
+        if [ -f $_dir/ssh/$_f ]; then
+            cp $_dir/ssh/$_f $_home/.ssh/$_f
+        fi
+    done
+
+    _grp=`user_group $_user`
+    chown -Rf $_user:$_grp $_home/.ssh
+    xchmod 0600 $_home/.ssh/id_rsa
+    xchmod 0644 $_home/.ssh/id_rsa.pub
+    xchmod 0644 $_home/.ssh/authorized_keys
+    xchmod 0700 $_home/.ssh
+}
+
+create_users() {
+   if [ -f $_conf_dir/users ]; then
+      users=$(cat $_conf_dir/users | \
+              sed -e 's/#.*$//g' -e '/^$/d' | \
+              awk -F: '{print $1}' | \
+              xargs echo)
+      rmuser -y $users
+      adduser -f $_conf_dir/users
+      for _u in $users; do
+          setup_user_keys $_u
+      done
+   fi
+}
+
+mk_conf() {
+   create_users
+#   sysrc sshd_enable=YES
+}
+
+mk_conf

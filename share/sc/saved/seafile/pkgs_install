@@ -1,0 +1,1 @@
+pkg install -y seafile-server seahub mysql57-server

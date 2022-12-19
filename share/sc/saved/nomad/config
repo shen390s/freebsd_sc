@@ -1,0 +1,14 @@
+#! /bin/sh
+
+get_ip() {
+   _if="$1"
+
+   if [ -z "$_if" ]; then
+      _if="em0"
+   fi
+
+   ifconfig "$_if" | grep inet | head -n 1 | awk '{print $2}'
+}
+
+/data/store/tools/nomad/mk_conf_nomad.sh dc="dc1" servers="$(get_ip)" is_server=yes
+

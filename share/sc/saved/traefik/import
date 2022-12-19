@@ -1,0 +1,9 @@
+ pot import -p traefik -t 13.1_amd64_latest -U /data/images/traefik/
+pot clone -p traefik -P traefik_13_1_amd64_latest
+# Fix mountpoint permission FreeBSD 13.1
+chmod 0755 /opt/pot/jails/traefik/m
+pot set-env -p traefik -E datacenter=dc1 -E domain="shenrs.eu" \
+    -E entryPoints="smtp:2025 pop3:20110 imap:20143 imaps:20993 pop3s:20995 login:2022 giteassh:3022 seafile:8082" 
+pot set-attr -p traefik -A start-at-boot -V yes
+pot mount-in -p traefik -m /data -d /data/store/
+chmod 0755 /opt/pot/jails/traefik/m

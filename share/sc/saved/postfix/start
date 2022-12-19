@@ -1,0 +1,8 @@
+#! /bin/sh
+
+cp /local/environment.sh /tmp
+/data/tools/postfix/mk_conf
+
+while :; do
+   sleep 60
+done

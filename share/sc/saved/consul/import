@@ -1,0 +1,7 @@
+ pot import -p consul -t 13.1_amd64_latest -U /data/images/consul/
+pot clone -p consul -P consul_13_1_amd64_latest
+# Fix mountpoint permission FreeBSD 13.1
+chmod 0755 /opt/pot/jails/consul/m
+pot set-env -p consul -E datacenter=dc1 -E encrypt="wHFZLYQLMs3x6Za1d6P+sOmyo7wW7bTWv++t5jpN8Mk=" -E servers="192.168.1.167"
+pot set-attr -p consul -A start-at-boot -V yes
+pot mount-in -p consul -m /data -d /data/store/

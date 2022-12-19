@@ -1,0 +1,179 @@
+#!/bin/sh
+
+if [ -f /tmp/environment.sh ]; then
+   . /tmp/environment.sh
+fi
+
+if [ -z "$dbpass" ]; then
+   dbpass="aaa123"
+fi
+
+if [ -z "$seafilepass" ]; then
+   seafilepass="aaa123"
+fi
+
+get_ip() {
+   netif="epair1b"
+
+   ifconfig "$netif" |\
+       grep inet |    \
+       head -n 1 |    \
+       awk '{print $2}'
+}
+
+mk_mysql_cnf() {
+   db_root="$1"
+   cat <<EOF
+[client]
+port                            = 3306
+socket                          = /tmp/mysql.sock
+
+[mysql]
+prompt                          = \u@\h [\d]>\_
+no_auto_rehash
+
+[mysqld]
+user                            = mysql
+port                            = 3306
+socket                          = /tmp/mysql.sock
+bind-address                    = 127.0.0.1
+basedir                         = /usr/local
+datadir                         = $db_root/mysql
+tmpdir                          = $db_root/mysql_tmpdir
+slave-load-tmpdir               = $db_root/mysql_tmpdir
+secure-file-priv                = $db_root/mysql_secure
+log-bin                         = mysql-bin
+log-output                      = TABLE
+master-info-repository          = TABLE
+relay-log-info-repository       = TABLE
+relay-log-recovery              = 1
+slow-query-log                  = 1
+server-id                       = 1
+sync_binlog                     = 1
+sync_relay_log                  = 1
+binlog_cache_size               = 16M
+expire_logs_days                = 30
+default_password_lifetime       = 0
+enforce-gtid-consistency        = 1
+gtid-mode                       = ON
+safe-user-create                = 1
+lower_case_table_names          = 1
+explicit-defaults-for-timestamp = 1
+myisam-recover-options          = BACKUP,FORCE
+open_files_limit                = 32768
+table_open_cache                = 16384
+table_definition_cache          = 8192
+net_retry_count                 = 16384
+key_buffer_size                 = 256M
+max_allowed_packet              = 64M
+long_query_time                 = 0.5
+innodb_buffer_pool_size         = 1G
+innodb_data_home_dir            = $db_root/mysql
+innodb_log_group_home_dir       = $db_root/mysql
+innodb_data_file_path           = ibdata1:128M:autoextend
+innodb_temp_data_file_path      = ibtmp1:128M:autoextend
+innodb_flush_method             = O_DIRECT
+innodb_log_file_size            = 256M
+innodb_log_buffer_size          = 16M
+innodb_write_io_threads         = 8
+innodb_read_io_threads          = 8
+innodb_autoinc_lock_mode        = 2
+skip-symbolic-links
+
+[mysqldump]
+max_allowed_packet              = 256M
+quote_names
+quick
+EOF
+}
+
+gen_update_dbpass() {
+    _pass="$1"
+    cat <<EOF
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$_pass';
+FLUSH PRIVILEGES;
+EOF
+}
+prepare_db() {
+   _cnf_dir="/data/conf/seafile"
+   _data_dir="/data/data/seafile"
+   _mysql_data_dir=$_data_dir/var/db
+
+   if [ -d $_cnf_dir/mysql ]; then
+       return
+   fi
+
+   mkdir -p $_cnf_dir/mysql
+
+   _my_cnf="$_cnf_dir/mysql/my.cnf"
+
+   for _d in mysql mysql_secure mysql_tmpdir; do
+      if [ ! -d $_mysql_data_dir/$_d ]; then
+          mkdir -p $_mysql_data_dir/$_d
+          chown -Rf mysql:mysql $_mysql_data_dir/$_d
+      fi
+   done
+
+   mk_mysql_cnf "$_mysql_data_dir" >$_my_cnf
+
+   sysrc mysql_optfile="$_my_cnf"
+   sysrc mysql_dbdir="$_mysql_data_dir/mysql"
+   sysrc mysql_confdir="$_cnf_dir/mysql"
+   sysrc mysql_enable="YES"
+
+   service mysql-server start
+
+   mysql_root_pass=$(cat /root/.mysql_secret| sed -e 's/^#.*$//g' -e '/^$/d' | head -n 1)
+
+   gen_update_dbpass "$dbpass" >/tmp/seafile.sql
+   mysql -u root --password="$mysql_root_pass" --connect-expired-password < /tmp/seafile.sql
+}
+
+prepare_seafile() {
+   _cnf_dir="/data/conf/seafile/seafile"
+
+   if [ -d $_cnf_dir/ccnet ];  then
+       return
+   fi
+
+   if [ -d /usr/local/www/haiwen/ccnet ]; then
+      rm -Rf /usr/local/www/haiwen/ccnet
+   fi
+
+   if [ -d /data/data/seafile/data ]; then
+      rm -Rf /data/data/seafile/data
+   fi
+
+   if [ -L /usr/local/www/haiwei/seafile-server-latest ]; then
+       unlink /usr/local/www/haiwei/seafile-server-latest
+   fi
+
+   /usr/local/www/haiwen/seafile-server/setup-seafile-mysql.sh auto \
+         -n seafile \
+         -i seafile.$datacenter.$domain \
+         -d /data/data/seafile/data -e 0 \
+         -u seafile -w "$seafilepass" -r "$dbpass"
+
+   if [ ! -d $_cnf_dir ]; then
+       mkdir -p $_cnf_dir
+   fi
+
+   for _d in ccnet conf; do
+       if [ -d /usr/local/www/haiwen/$_d ]; then
+          cp -Rf /usr/local/www/haiwen/$_d $_cnf_dir/$_d
+       fi
+   done
+
+   sysrc seafile_ccnet="$_cnf_dir/ccnet"
+   sysrc seafile_conf="$_cnf_dir/conf"
+   sysrc seafile_datadir="/data/data/seafile/data"
+   sysrc seafile_logdir="$_cnf_dir/seafile-logs"
+   sysrc seafile_enable="YES"
+   sysrc seahub_enable="YES"
+   sysrc seahub_port="8080"
+}
+
+set -x
+prepare_db
+prepare_seafile
+

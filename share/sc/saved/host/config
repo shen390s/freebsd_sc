@@ -1,0 +1,58 @@
+#!/bin/sh
+
+get_ip() {
+   _ifs="$1"
+
+   if [ -z "$_ifs" ]; then
+      _ifs="em0 re0"
+   fi
+
+   for _if in $_ifs; do
+       _ip=$(ifconfig "$_if" 2>/dev/null | grep inet | head -n 1 | awk '{print $2}')
+       if [ "x$?" = "x0" ]; then
+           echo $_ip
+           return
+       fi
+   done
+
+   echo
+}
+
+import_pot() {
+   local _pot _tag
+
+   _pot="$1"
+   _tag="$2"
+
+   if pot info -p "$_pot" 2>&1 >/dev/null; then
+       :
+   else
+      _b=$(echo "${_pot}_${_tag}" |sed -e 's/\./_/g')
+      if pot info -p "$_b" 2>&1 >/dev/null; then
+           :
+      else
+          (cd /data/images/$_pot && pot import -p "$_p" -t "$_tag" -U .)
+      fi
+
+      pot clone -p "$_pot" -P $_b
+   fi
+}
+
+_servers="192.168.1.31 192.168.1.32 192.168.1.33"
+_entryPoints="login:2022 giteassh:3022 seafile:8082"
+../nomad/mk_conf_nomad.sh dc=dc1 servers="$_servers" is_server=yes
+
+_pots="consul traefik"
+_tag="13.1_amd64_latest"
+
+for _p in $_pots; do
+   import_pot $_p 13.1_amd64_latest
+   pot stop $_p 2>&1 >/dev/null
+   pot set-env -p $_p -E encrypt="wHFZLYQLMs3x6Za1d6P+sOmyo7wW7bTWv++t5jpN8Mk=" \
+       -E datacenter=dc1 \
+       -E servers="$_servers" \
+       -E entryPoints="$_entryPoints"
+   pot mount-in -p $_p  -m /data -d /data/store/
+   pot start $_p
+   pot exec -p $_p /data/tools/$_p/mk_conf
+done

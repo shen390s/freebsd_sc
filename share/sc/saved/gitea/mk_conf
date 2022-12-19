@@ -1,0 +1,125 @@
+#!/bin/sh
+
+if [ -f /tmp/environment.sh ]; then
+   . /tmp/environment.sh
+fi
+
+get_ip() {
+   netif="epair1b"
+
+   ifconfig "$netif" |\
+       grep inet |    \
+       head -n 1 |    \
+       awk '{print $2}'
+}
+
+mk_gitea_ini() {
+   cat <<EOF
+APP_NAME = Gitea: Git with a cup of tea
+RUN_USER = git
+RUN_MODE = prod
+
+[database]
+DB_TYPE  = sqlite3
+HOST     = 127.0.0.1:3306
+NAME     = gitea
+PASSWD   =
+PATH     = /data/data/gitea/gitea.db
+SSL_MODE = disable
+# USER     = root
+
+[indexer]
+ISSUE_INDEXER_PATH = /data/data/gitea/indexers/issues.bleve
+
+[log]
+ROOT_PATH = /var/log/gitea
+MODE      = file
+LEVEL     = Info
+
+[mailer]
+ENABLED = false
+
+[oauth2]
+JWT_SECRET = D56bmu6xCtEKs9vKKgMKnsa4X9FDwo64HVyaS4fQ4mY
+
+[picture]
+AVATAR_UPLOAD_PATH      = /data/data/gitea/data/avatars
+DISABLE_GRAVATAR        = false
+ENABLE_FEDERATED_AVATAR = false
+
+[repository]
+ROOT = /data/data/gitea/gitea-repositories
+# Gitea's default is 'bash', so if you have bash installed, you can comment
+# this out.
+SCRIPT_TYPE = sh
+
+[repository.upload]
+TEMP_PATH = /data/data/gitea/data/tmp/uploads
+
+[security]
+INSTALL_LOCK = true
+INTERNAL_TOKEN = 1FFhAklka01JhgJTRUrFujWYiv4ijqcTIfXJ9o4n1fWxz+XVQdXhrqDTlsnD7fvz7gugdhgkx0FY2Lx6IBdPQw==
+SECRET_KEY   = ChangeMeBeforeRunning
+
+[session]
+PROVIDER = file
+PROVIDER_CONFIG = /data/data/gitea/data/sessions
+
+[server]
+DOMAIN       = gitea.$datacenter.$domain
+HTTP_ADDR    = $(get_ip)
+HTTP_PORT    = 3000
+ROOT_URL     = http://gitea.$datacenter.$domain:8080/
+# ROOT_URL = http://localhost:3000/
+DISABLE_SSH  = false
+# START_SSH_SERVER = true
+SSH_DOMAIN   = gitea.$datacenter.$domain
+SSH_PORT     = 3022
+OFFLINE_MODE = false
+APP_DATA_PATH = /data/data/gitea/data
+
+[service]
+REGISTER_EMAIL_CONFIRM = false
+ENABLE_NOTIFY_MAIL     = false
+DISABLE_REGISTRATION   = false
+ENABLE_CAPTCHA         = true
+REQUIRE_SIGNIN_VIEW    = false
+EOF
+}
+
+mk_sshd_config() {
+   _f="$1"
+
+   cat $_f |sed -e 's/^Port[ \t\b]*=.$//g'
+   echo "Port = 3022"
+}
+
+mk_conf() {
+   _dir="/data/data/gitea"
+   
+   if [ ! -d $_dir ]; then
+      mkdir -p $_dir
+   fi
+
+   _dirs="/data/data/gitea/data /data/data/gitea/conf /data/data/gitea/data/tmp/uploads /data/data/gitea/gitea-repositories /data/data/gitea/data/avatars /data/data/gitea/indexers /data/data/gitea/data/home"
+
+   for _d in $_dirs; do
+       mkdir -p $_d
+       chown -Rf git:git $_d
+   done
+
+   mk_gitea_ini > /data/data/gitea/conf/app.ini   
+   
+   if [ ! -d /data/data/gitea/users/git ]; then
+       mkdir -p /data/data/gitea/users/git
+       chown -Rf git:git /data/data/gitea/users/git
+   fi
+
+   pw usermod -n git -d /data/data/gitea/users/git
+    
+   cp /etc/ssh/sshd_config /etc/ssh/sshd_config.orig
+   mk_sshd_config /etc/ssh/sshd_config.orig > /etc/ssh/sshd_config
+   sysrc sshd_enable=YES
+}
+
+mk_conf

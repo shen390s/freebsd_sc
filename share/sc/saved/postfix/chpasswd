@@ -1,0 +1,12 @@
+#!/usr/local/bin/expect -f
+
+set passwdf [lindex $argv 0]
+set user [lindex $argv 1]
+set passwd [lindex $argv 2]
+
+spawn saslpasswd2 -f $passwdf $user
+expect -re "^.*assword:"
+send "$passwd\r"
+expect -re "^Again.*:"
+send "$passwd\r"
+expect eof

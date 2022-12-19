@@ -1,0 +1,100 @@
+#!/bin/sh 
+. /tmp/environment.sh
+
+get_ip() {
+   _ifs="$1"
+
+   if [ -z "$_ifs" ]; then
+      _ifs="em0 re0"
+   fi
+
+   for _if in $_ifs; do
+      _ip=$(ifconfig "$_if" 2>/dev/null | grep inet | head -n 1 | awk '{print $2}')
+      if [ -z "$_ip" ]; then
+          :
+      else
+          echo $_ip
+          return
+      fi
+   done
+
+   echo
+}
+
+vote_count() {
+  _cnt=0
+
+  for _s in $servers; do
+     _cnt=$(expr $_cnt + 1)
+  done
+
+  echo $_cnt
+}
+
+get_join_list() {
+  _list=""
+  _sep=""
+
+  for _s in $servers; do
+     _list="$_list $_sep \"$_s\""
+     _sep=","
+  done
+
+  echo $_list
+}
+
+mk_consul_conf_server() {
+   cat <<EOF
+server = true
+client_addr = "$(get_ip)"
+bootstrap_expect = $(vote_count)
+
+connect {
+    enabled = true
+}
+
+
+addresses {
+    grpc = "0.0.0.0"
+}
+
+ports {
+    grpc = 8502
+}
+
+ui_config {
+    enabled = true
+}
+EOF
+}
+
+mk_consul_conf_client() {
+   cat <<EOF
+datacenter = "$datacenter"
+bind_addr = "$(get_ip)"
+encrypt = "$encrypt"
+verify_incoming = false
+verify_outgoing = false
+verify_server_hostname = false
+retry_join = [ $(get_join_list) ]
+EOF
+}
+
+mk_consul_conf() {
+   _conf_dir=/usr/local/etc/consul.d
+   _data_dir=/var/db/consul
+
+   mkdir -p $_conf_dir
+
+   mk_consul_conf_client >$_conf_dir/client.hcl
+   mk_consul_conf_server >$_conf_dir/server.hcl
+   
+   chown -Rf consul:consul $_conf_dir
+   mkdir -p $_data_dir
+   chown -Rf consul:consul $_data_dir
+
+   sysrc consul_enable="YES"
+}
+
+mk_consul_conf
+service consul restart

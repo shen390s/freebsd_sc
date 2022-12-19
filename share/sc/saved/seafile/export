@@ -1,0 +1,3 @@
+pot snapshot -p seafile
+pot export -p seafile -t 1.0 
+

@@ -1,0 +1,5 @@
+ pot import -p seafile -t 1.0  -U /data/images/seafile/
+pot clone -p seafile -P seafile_1_0
+pot set-env -p seafile -E datacenter=dc1 -E domain="shenrs.eu"
+pot set-attr -p seafile -A start-at-boot -V yes
+pot mount-in -p seafile -m /data -d /data/store/

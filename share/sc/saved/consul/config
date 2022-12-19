@@ -1,0 +1,1 @@
+pot exec -p consul /data/tools/consul/mk_conf

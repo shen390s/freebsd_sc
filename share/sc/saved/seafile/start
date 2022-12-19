@@ -1,0 +1,17 @@
+#! /bin/sh
+
+cp /local/environment.sh /tmp
+
+/data/tools/seafile/mk_conf
+
+sysrc mysql_enable="YES"
+sysrc seafile_enable="YES"
+sysrc seahub_enable="YES"
+
+service mysql-server start 
+service seafile start
+service seahub start
+
+while :; do
+   sleep 60
+done
