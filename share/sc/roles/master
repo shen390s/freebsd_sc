@@ -1,0 +1,2 @@
+services="pot nomad"
+images="consul traefik"

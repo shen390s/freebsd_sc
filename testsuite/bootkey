@@ -1,0 +1,24 @@
+
+bootkey_test() {
+    echo boot key zfs_load: $(get_boot_key zfs_load)
+
+    bootkey_set
+}
+
+bootkey_set() {
+    cp /boot/loader.conf /tmp/boot.conf
+
+    BOOTFILE=/tmp/boot.conf
+    export BOOTFILE
+
+    set_boot_key "zfs_load" "NONE"
+    set_boot_key "zzz_load" "YES"
+}
+
+run_test() {
+    bootkey_test
+}
+
+# Local Variables:
+# mode: sh
+# End:

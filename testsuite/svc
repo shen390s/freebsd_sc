@@ -1,0 +1,13 @@
+svc_test() {
+    echo packages for consul: $(svc_pkgs consul)
+    echo packages for nomad: $(svc_pkgs nomad)
+    echo packages for nonexisted: $(svc_pkgs nonexisted)
+}
+
+run_test() {
+    svc_test
+}
+
+# Local Variables:
+# mode: sh
+# End:

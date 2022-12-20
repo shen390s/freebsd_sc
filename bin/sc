@@ -12,63 +12,34 @@ export APP TOP
 . $TOP/share/sc/lib/funcs
 . $TOP/share/sc/sv/svcs
 
-build() {
-    local _role _xfile
+sc_help() {
+    local _c
 
-    _role="$1"
-    shift 1
-    _xfile="$TOP/share/sc/roles/$_role/config"
+    printf "usage:   %s command [command options] \n" $APP
+    for _c in ${sc_commands}; do
+	if [ "x$(fn_defined sc_${_c}_help)" = "xyes" ]; then
+	    printf "\t - %s\n" "$(eval sc_${_c}_help)"
+	else
+	    printf "\t - %s\n" $_c
+	fi
+    done
+}
 
-    if [ -f "$_xfile" ]; then
-	. "$_xfile" 
-	build_image "$_role"
-    else
-	cat <<EOF
-$_xfile can not be found.
-EOF
-	exit 1
+load_commands
+
+load_conf "$TOP/etc/sc.conf.default"
+
+if [ "x$(fn_defined sc_${action})" = "xyes" ]; then
+    eval "sc_${action} $@"
+else
+    if [ ! -z "$action" ]; then
+	printf "unknown command: %s\n" $action
+	printf "\n"
     fi
-	
-}
-
-deploy() {
-    local _role _job
-
-    _role="$1"
-    shift 1
-
-    _job="$TOP/share/sc/jobs/${_role}.job"
-    if [ -f "$_job" ]; then
-	nomad run "$_job"
-    else
-	cat <<EOF
-nomad job "$_job" can not be found
-EOF
-    fi
-}
-
-help() {
-    cat <<EOF
-usage: $APP command options
-       commands:
-            - build host
-            - build jail roles(gitea/login/postix/seafile)
-	    - deploy jail roles
-EOF
-}
-
-case $action in
-    build)
-	build "$@"
-	;;
-    deploy)
-	deploy "$@"
-	;;
-    help)
-	help
-	;;
-    *)
-	help
-	;;
-esac
     
+    sc_help
+fi
+
+# Local Variables:
+# mode: sh
+# End:

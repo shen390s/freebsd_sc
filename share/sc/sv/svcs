@@ -17,3 +17,8 @@ import_svcs() {
 }
 
 import_svcs $TOP/share/sc/sv
+
+# Local Variables:
+# mode: sh
+# End:
+

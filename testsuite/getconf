@@ -1,0 +1,14 @@
+getconf_test() {
+    test_key="abcd"
+
+    echo get_config test_key: $(get_config "" test_key)
+    consul_bridge_mode="inherit"
+
+    echo get_config consul/bridge_mode: $(get_config "consul" "bridge_mode")
+}
+run_test() {
+    getconf_test
+}
+# Local Variables:
+# mode: sh
+# End:

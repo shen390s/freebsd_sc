@@ -1,0 +1,17 @@
+dry_run_test() {
+    run_command "cat /etc/hosts"
+}
+
+run_test() {
+    echo dry run is ON
+    dry_run=yes
+    dry_run_test
+
+    echo && echo
+    echo dry run is OFF
+    dry_run=no
+    dry_run_test
+}
+# Local Variables:
+# mode: sh
+# End:

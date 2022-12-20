@@ -2,8 +2,9 @@ datacenter=dc1
 domain=shenrs.eu
 encrypt="wHFZLYQLMs3x6Za1d6P+sOmyo7wW7bTWv++t5jpN8Mk="
 servers="192.168.1.31 192.168.1.32 192.168.1.33"
-tool_mountpoint="/data"
-conf_mountpoint="/conf"
+sc_mountpoint="/mnt/sc"
+conf_mountpoint="/mnt/conf"
+data_mountpoint="/mnt/data"
 image_store_path="/data/images"
 entry_points="login:2022 giteassh:3022 seafile:8082 smtp:2025 pop3:20110 imap:20143 imaps:20993 pop3s:20995"
 users="rshen ann apple"
@@ -11,3 +12,4 @@ postfix_relay_servers="[relay.wiredblade.com]:2525 [relay.wiredblade.com]:25 [re
 postfix_relay_user="relay@relay.shenrs.eu"
 postfix_relay_passwd='set to your password'
 postfix_mail_pem=
+dry_run=yes

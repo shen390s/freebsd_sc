@@ -1,0 +1,12 @@
+fn_def_test() {
+    echo run_test is defined = $(fn_defined run_test)
+    echo run_case is defined = $(fn_defined run_case)
+}
+
+run_test() {
+    fn_def_test
+}
+
+# Local Variables:
+# mode: sh
+# End:

@@ -1,0 +1,34 @@
+#!/bin/sh
+
+APP=$(basename $0)
+_appdir=$(dirname $0)
+TOP=$(realpath $(cd $_appdir/../../.. && pwd))
+
+export TOP
+
+role="$1"
+
+if [ -z "$role" ]; then
+    echo "no role specified"
+    exit 1
+fi
+
+. $TOP/share/sc/lib/funcs
+. $TOP/share/sc/sv/svcs
+
+load_conf "$TOP/etc/sc.conf.default"
+
+if [ -f $TOP/share/sc/roles/$role ]; then
+    . $TOP/share/sc/roles/$role
+else
+    echo role "$role" can not be found
+    exit 1
+fi
+
+for _s in $services; do
+    svc_install "$_s"
+done
+
+# Local Variables:
+# mode: sh
+# End:

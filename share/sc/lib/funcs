@@ -18,3 +18,8 @@ import_funcs() {
 }
 
 import_funcs $TOP/share/sc/lib
+
+# Local Variables:
+# mode: sh
+# End:
+
