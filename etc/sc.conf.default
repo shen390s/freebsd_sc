@@ -1,10 +1,13 @@
+netif_names="em%d re%d epair%db"
 datacenter=dc1
 domain=shenrs.eu
 encrypt="wHFZLYQLMs3x6Za1d6P+sOmyo7wW7bTWv++t5jpN8Mk="
 servers="192.168.1.31 192.168.1.32 192.168.1.33"
-sc_mountpoint="/mnt/sc"
-conf_mountpoint="/mnt/conf"
-data_mountpoint="/mnt/data"
+sc_mountpoint="/mnt/sc/tools"
+conf_mountpoint="/mnt/sc/conf"
+conf_mountfrom=192.168.1.3:/sc/conf
+data_mountpoint="/mnt/sc/data"
+data_mountfrom=192.168.1.3:/sc/data
 image_store_path="/data/images"
 entry_points="login:2022 giteassh:3022 seafile:8082 smtp:2025 pop3:20110 imap:20143 imaps:20993 pop3s:20995"
 users="rshen ann apple"

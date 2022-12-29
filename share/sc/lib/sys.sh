@@ -10,23 +10,6 @@ fn_defined() {
     fi
 }
 
-filt_jargs() {
-    local _var1 _var2 _s
-
-    _var1="$1" && shift
-    _var2="$1" && shift
-    
-    if [ "x$1" = "x-j" ]; then
-	_s="$_var1=$2"
-	# eval "echo \$$_var"
-	shift 2
-    else
-	_s="$_var1=\"\""
-    fi
-
-    echo "$_s $_var2=$@"
-}
-
 load_conf() {
     local _f
 
@@ -44,42 +27,28 @@ is_dry_run() {
 }
 
 check_debug() {
-    if [ "x$debug" = "xyes" ]; then
-	set -x
-    fi
+    test "x$debug" = "xyes" && set -x
 }
 
 run_command() {
-    local _pexec
-
-    if [ "x$1" = "x-j" ]; then
-	_pexec="pot exec -p $2 "
-	shift 2
-    else
-	_pexec=""
-    fi
-    
-    
     if is_dry_run; then
 	echo "run command: $_pexec $@"
     else
-	eval $_pexec "$@"
+	eval "$@"
     fi
 }
 
 save_command_output() {
-    local _f _data
+    local _f 
 
     _f="$1"
     shift
 
-    _data=$(run_command "$@")
-
     if is_dry_run; then
 	echo Following output data will be saved to "$_f":
-	echo $_data
+	eval "$@"
     else
-	echo $_data >> "$_f"
+	eval "$@" >> "$_f"
     fi
 }
 
@@ -90,6 +59,7 @@ boot_file() {
 	echo $BOOTFILE
     fi
 }
+
 get_boot_key() {
     local _key _c _bootf
 
@@ -122,4 +92,90 @@ set_boot_key() {
 	    save_command_output $(boot_file) echo "${_k}=${_v}" 
 	fi
     fi
+}
+
+get_mount() {
+    local _from _mpt _c
+
+    _from="$1" && shift
+
+    _c="awk '{if (\$1 == \"${_from}\") print \$2 }'"
+    cat /etc/fstab | \
+	sed -e 's/#.*$//g' -e '/^$/d' | \
+	eval "$_c"
+}
+
+add_mount() {
+    local _from _mpt _fs _v
+
+    _from="$1" && shift
+    _mpt="$1" && shift
+    _fs="$1" && shift
+    
+    _v=$(get_mount "$_from")
+    if [ ! -z "$_v" ]; then
+	if [ "x$_v" = "x$_mpt" ]; then
+	    return
+	else
+	    echo Conflict fstab item "$_from"
+	    exit 1
+	fi
+    fi
+
+    save_command_output /etc/fstab echo "$_from $_mpt $_fs rw 0 0"
+}
+
+try_get_netif_ip() {
+    local _prefix _max _idx _netif _ip
+
+    _prefix="$1"
+    _max="$2"
+
+    if [ -z "$_prefix" ]; then
+	_prefix="em"
+    fi
+
+    if [ -z "$_max" ]; then
+	_max=0
+    fi
+
+    for _idx in $(seq 0 $_max); do
+	_netif=$(printf "$_prefix" "$_idx")
+	_ip=$(ifconfig "$_netif" |\
+		  grep inet |\
+		  head -n 1 |\
+		  awk '{print $2}')
+	if [ -z "$_ip" ]; then
+	    :
+	else
+	    echo "$_ip"
+	    return
+	fi
+    done
+
+    echo
+}
+
+get_my_ip() {
+    local _ip _if _maxif
+
+    for _if in $netif_names; do
+	case "$_if" in
+	    epair*)
+		_maxif=20
+		;;
+	    *)
+		_maxif=0
+		;;
+	esac
+
+	_ip=$(try_get_netif_ip "$_if" "$_maxif")
+
+	if [ ! -z "$_ip" ]; then
+	    echo "$_ip"
+	    return
+	fi
+    done
+
+    echo
 }

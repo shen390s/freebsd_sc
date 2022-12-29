@@ -1,11 +1,20 @@
 #!/bin/sh
+
 APP=$(basename $0)
 _appdir=$(dirname $0)
 TOP=$(realpath $(cd $_appdir/../../.. && pwd))
 
 export TOP
 
-role="$1"
+action="$1" && shift
+role="$1" && shift
+
+conf=""
+if [ ! -z "$CONF" ]; then
+    if [ -f "$CONF" ]; then
+	conf="$CONF"
+    fi
+fi
 
 if [ -z "$role" ]; then
     echo "no role specified"
@@ -17,6 +26,14 @@ fi
 
 load_conf "$TOP/etc/sc.conf.default"
 
+if [ ! -z "$conf" ]; then
+    if [ -f "$conf" ]; then
+	load_conf "$conf"
+    fi
+fi
+
+check_debug
+
 if [ -f $TOP/share/sc/roles/$role ]; then
     . $TOP/share/sc/roles/$role
 else
@@ -24,10 +41,9 @@ else
     exit 1
 fi
 
-# set -x
-for _s in $services; do
-    svc_start "$_s"
-done
+if [ "x$(fn_defined role_${role}_${action})" = "xyes" ]; then
+    eval "role_${role}_${action} $@"
+fi
 
 # Local Variables:
 # mode: sh

@@ -3,7 +3,9 @@ nomad_pkgs() {
 }
 
 nomad_config() {
-    true
+    run_command sysrc nomad_args="\"-config=/usr/local/etc/nomad\""
+    run_command sysrc nomad_user="root"
+    run_command sysrc nomad_env="\"PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/sbin:/bin\""
 }
 
 nomad_enable() {

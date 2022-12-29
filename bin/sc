@@ -4,9 +4,6 @@ APP=$(basename $0)
 _appdir=$(dirname $0)
 TOP=$(realpath $(cd $_appdir/.. && pwd))
 
-action="$1"
-shift
-
 export APP TOP
 
 . $TOP/share/sc/lib/funcs
@@ -15,7 +12,7 @@ export APP TOP
 sc_help() {
     local _c
 
-    printf "usage:   %s command [command options] \n" $APP
+    printf "usage: %s [-f config ] command [command options] \n" $APP
     for _c in ${sc_commands}; do
 	if [ "x$(fn_defined sc_${_c}_help)" = "xyes" ]; then
 	    printf "\t - %s\n" "$(eval sc_${_c}_help)"
@@ -27,7 +24,39 @@ sc_help() {
 
 load_commands
 
+args=$(getopt f:h $*)
+
+if [ $? -ne 0 ]; then
+    sc_help
+    exit 1
+fi
+
+set -- $args
+
+while :; do
+    case "$1" in
+	-f)
+	    _conf="$2"
+	    shift 2
+	    ;;
+	-h)
+	    sc_help
+	    exit 1
+	    ;;
+	--)
+	    shift
+	    break
+	    ;;
+    esac
+	       
+done
+
+action="$1"
+shift
+
 load_conf "$TOP/etc/sc.conf.default"
+
+test ! -z "$_conf" && load_conf "$_conf"
 
 if [ "x$(fn_defined sc_${action})" = "xyes" ]; then
     eval "sc_${action} $@"

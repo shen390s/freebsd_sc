@@ -10,7 +10,7 @@ sc_init() {
     fi
 
     for _stage in install config start; do
-	if $TOP/share/sc/tools/$_stage "$_role" ; then
+	if $TOP/share/sc/tools/helper $_stage "$_role" ; then
 	    :
 	else
 	    echo  "$_role" failed in "$_stage"

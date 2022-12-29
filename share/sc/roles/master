@@ -1,2 +1,54 @@
-services="pot nomad"
-images="consul traefik"
+master_services="lockd statd pot nomad"
+need_reboot="no"
+
+role_master_install() {
+    local _s _d
+
+    for _d in $conf_mountpoint $data_mountpoint; do
+	if [ ! -d $_d ]; then
+	    run_command mkdir -p $_d
+	fi
+    done
+    
+    if [ ! -z "$conf_mountfrom" ]; then
+	add_mount "$conf_mountfrom" "$conf_mountpoint" "nfs"
+    fi
+
+    if [ ! -z "$data_mountfrom" ]; then
+	add_mount "$data_mountfrom" "$data_mountpoint" "nfs"
+    fi
+    
+    for _s in ${master_services}; do
+	svc_install "$_s"
+    done
+}
+
+role_master_config() {
+    local _s _role
+    
+    for _s in ${master_services}; do
+	svc_config "$_s"
+	svc_enable "$_s"
+    done
+
+#    run_command mount -a
+    
+    for _s in ${master_services}; do
+	svc_start "$_s"
+    done
+
+    run_command mount -a
+    
+    for _role in consul traefik; do
+	build_image "$_role" "1.0"
+	deploy_image "$_role" "1.0" 
+    done
+}
+
+role_master_start() {
+    true
+}
+
+# Local Variables:
+# mode: sh
+# End:

@@ -1,0 +1,26 @@
+role_consul_services="consul"
+
+role_consul_install() {
+    local _s
+
+    for _s in $role_consul_services; do
+	svc_install "$_s"
+    done
+}
+
+role_consul_config() {
+    for _s in $role_consul_services; do
+	svc_config "$_s"
+    done
+
+    for _s in $role_consul_services; do
+	svc_restart "$_s"
+    done
+}
+
+role_consul_start() {
+    true
+}
+# Local Variables:
+# mode: sh
+# End:

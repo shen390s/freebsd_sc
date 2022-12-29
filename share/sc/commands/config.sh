@@ -26,8 +26,18 @@ EOF
 	
 }
 
+sc_mkconfig() {
+    cat >sc.conf <<EOF
+$(cat $TOP/etc/sc.conf.default)
+EOF
+}
+
 sc_config_help() {
     echo "config image_name tag, configure service"
 }
 
-add_commands "config"
+sc_mkconfig_help() {
+    echo "generate cluster configuration"
+}
+
+add_commands "config" "mkconfig"

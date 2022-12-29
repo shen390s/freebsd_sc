@@ -1,0 +1,24 @@
+role_traefik_services="traefik"
+
+role_traefik_install() {
+    local _s
+
+    for _s in $role_traefik_services; do
+	svc_install "$_s"
+    done
+}
+
+role_traefik_config() {
+    local _s
+
+    for _s in $role_traefik_services; do
+	svc_config "$_s"
+    done
+}
+
+role_traefik_start() {
+    true
+}
+# Local Variables:
+# mode: sh
+# End:
