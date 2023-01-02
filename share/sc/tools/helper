@@ -6,33 +6,63 @@ TOP=$(realpath $(cd $_appdir/../../.. && pwd))
 
 export TOP
 
-action="$1" && shift
-role="$1" && shift
-
-conf=""
-if [ ! -z "$CONF" ]; then
-    if [ -f "$CONF" ]; then
-	conf="$CONF"
-    fi
-fi
-
-if [ -z "$role" ]; then
-    echo "no role specified"
-    exit 1
-fi
-
 . $TOP/share/sc/lib/funcs
 . $TOP/share/sc/sv/svcs
 
-load_conf "$TOP/etc/sc.conf.default"
+check_debug
 
-if [ ! -z "$conf" ]; then
-    if [ -f "$conf" ]; then
-	load_conf "$conf"
-    fi
+usage() {
+    cat <<EOF
+usage: $APP [-f conf] action role
+       - conf is configuration file
+       - action: install/config/..
+       - role the role to be applied by action
+EOF
+}
+
+args=$(getopt f:h $*)
+
+if [ $? -ne 0 ]; then
+    sc_help
+    exit 1
 fi
 
-check_debug
+set -- $args
+
+while :; do
+    case "$1" in
+	-f)
+	    _conf=$(realpath "$2")
+	    shift 2
+	    ;;
+	-h)
+	    usage
+	    exit 1
+	    ;;
+	--)
+	    shift
+	    break
+	    ;;
+    esac
+	       
+done
+
+action="$1" && shift
+role="$1" && shift
+
+if [ -z "$role" ]; then
+    echo "no role specified"
+    usage
+    exit 1
+fi
+
+load_conf "$TOP/etc/sc.conf.default"
+
+if [ ! -z "$_conf" ]; then
+    if [ -f "$_conf" ]; then
+	load_conf "$_conf"
+    fi
+fi
 
 if [ -f $TOP/share/sc/roles/$role ]; then
     . $TOP/share/sc/roles/$role

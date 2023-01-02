@@ -36,7 +36,7 @@ set -- $args
 while :; do
     case "$1" in
 	-f)
-	    _conf="$2"
+	    _conf=$(realpath "$2")
 	    shift 2
 	    ;;
 	-h)
@@ -56,9 +56,14 @@ shift
 
 load_conf "$TOP/etc/sc.conf.default"
 
-test ! -z "$_conf" && load_conf "$_conf"
+test ! -z "$_conf" \
+    && load_conf "$_conf" \
+    && CONF="$_conf" \
+    && export CONF
+    
 
 if [ "x$(fn_defined sc_${action})" = "xyes" ]; then
+    set -e
     eval "sc_${action} $@"
 else
     if [ ! -z "$action" ]; then

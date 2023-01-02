@@ -1,18 +1,19 @@
 
 sc_init() {
-    local _role _stage
+    local _role _stage _status _d
 
     _role="$1"
-    shift
+    test $# -gt 0 && shift
 
     if [ -z "$_role" ]; then
 	_role="master"
     fi
 
     for _stage in install config start; do
-	if $TOP/share/sc/tools/helper $_stage "$_role" ; then
-	    :
-	else
+	run_helper "" $_stage "$_role"
+	_status=$?
+
+	if [ $_status -ne 0 ]; then
 	    echo  "$_role" failed in "$_stage"
 	    exit 1
 	fi

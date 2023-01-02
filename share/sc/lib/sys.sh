@@ -32,7 +32,7 @@ check_debug() {
 
 run_command() {
     if is_dry_run; then
-	echo "run command: $_pexec $@"
+	echo "run command: $@"
     else
 	eval "$@"
     fi
@@ -178,4 +178,90 @@ get_my_ip() {
     done
 
     echo
+}
+
+create_pot() {
+    local _name _base _net
+
+    _name="$1" && shift
+    
+    if pot info -p "$_name" 2>&1 >/dev/null; then
+	run_command pot destroy -F -r "$_name"
+    fi
+    
+    _net=$(get_config "$_name" "network")
+    if [ -z "$_net" ]; then
+	_net="public-bridge"
+    fi
+
+    _base=$(get_config "$_name" "base")
+    if [ -z "$_base" ]; then
+	_base=$(uname -r |awk -F- '{print $1}')
+    fi
+
+    run_command pot create -p "$_name" \
+		-N "$_net" -t single \
+		-b "$_base"
+}
+
+start_pot() {
+    local _pot
+
+    _pot="$1" && shift
+    run_command pot start "$_pot"
+}
+
+pot_exec() {
+    local _p _c _nc _z
+    
+    _p="$1" && shift
+    _c="$1" && shift
+
+    if is_dry_run; then
+	_nc=$(echo "$_c" |sed -e s@$sc_mountpoint@$TOP@g)
+	run_command echo run commands in pot "$_p": $_c "$@" 
+
+	if [ "x$debug" = "xyes" ]; then
+	    _z="-x"
+	else
+	    _z=""
+	fi
+	
+	eval "dry_run=yes /bin/sh $_z $_nc $@"
+    else
+	run_command pot exec -p "$_p" \
+		    "$_c" "$@"
+    fi
+}
+
+run_helper() {
+    local _jail _helper _c
+
+    _jail="$1"
+    test $# -gt 0 && shift
+
+    if [ -z "${_jail}" ]; then
+	_helper=$TOP/share/sc/tools/helper
+	if [ -z "$CONF" ]; then
+	    debug="$debug" $_helper "$@"
+	else
+	    debug="$debug" $_helper -f $CONF "$@"
+	fi
+    else
+	_helper=$sc_mountpoint/share/sc/tools/helper
+	if [ -z "$CONF" ]; then
+	    pot_exec "$_jail" $_helper "$@"
+	else
+	    set +e
+	    pot stop -p "$_jail"
+	    set -e
+	    
+	    run_command pot copy-in -p "$_jail" \
+			-s $CONF -d /var/tmp/sc.conf
+
+	    pot start -p "$_jail"
+	    
+	    pot_exec "$_jail" $_helper -f /var/tmp/sc.conf "$@"
+	fi
+    fi
 }
