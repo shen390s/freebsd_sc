@@ -1,5 +1,7 @@
 role_consul_services="consul"
 
+consul_network="inherit"
+
 role_consul_install() {
     local _s
 

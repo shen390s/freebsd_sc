@@ -252,9 +252,9 @@ run_helper() {
 	if [ -z "$CONF" ]; then
 	    pot_exec "$_jail" $_helper "$@"
 	else
-	    set +e
+#	    set +e
 	    pot stop -p "$_jail"
-	    set -e
+#	    set -e
 	    
 	    run_command pot copy-in -p "$_jail" \
 			-s $CONF -d /var/tmp/sc.conf

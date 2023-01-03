@@ -135,7 +135,7 @@
 [providers]
   [providers.consulCatalog]
     exposedByDefault = true
-    defaultRule = "Host(\`{{ .Name }}.%%DATACENTER%%.%%DOMAIN%%\`)"
+    defaultRule = "Host(`{{ .Name }}.%%DATACENTER%%.%%DOMAIN%%`)"
     stale = false
     [providers.consulCatalog.endpoint]
     address = "http://%%MY_IP%%:8500"

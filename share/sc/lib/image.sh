@@ -1,3 +1,23 @@
+check_image() {
+    local _name _tag _it _d
+
+    _name="$1"
+    _tag="$2"
+
+    if [ -z "$_tag" ]; then
+	_tag="1.0"
+    fi
+
+    _d=$image_store_path
+    _it="${_name}_${_tag}.xz"
+    if [ ! -f $_d/$_it -o ! -f $_d/${_it}.meta -o ! -f $_d/${_it}.skein ]; then
+	false
+	return
+    fi
+
+    xz -t $_d/$_it
+}
+
 build_image() {
     local _name _tag
 
@@ -23,11 +43,21 @@ build_image() {
     run_helper "$_name" install "$_name"
 
     run_command pot stop -p "$_name"
+}
+
+export_image() {
+    local _name _tag
+
+    _name="$1"
+    _tag="$2"
 
     # FIXME:
-    run_command echo >/opt/pot/jails/$_name/conf/fscomp.conf
+    run_command pot stop -p "$_name"
+    
+    run_command rm /opt/pot/jails/$_name/conf/fscomp.conf
+    run_command touch /opt/pot/jails/$_name/conf/fscomp.conf
 
-    run_command pot snapshot -p "$_name"
+    run_command pot snapshot -r -p "$_name"
 
     if [ ! -d $image_store_path ]; then
 	run_command mkdir -p $image_store_path
@@ -59,6 +89,7 @@ deploy_image() {
 	_boot="no"
     fi
     
+    run_command rm -Rf /var/cache/pot/${_i}_${_t}.xz*
     run_command pot import -p "$_i" -t "$_t" \
 		-U $image_store_path
     op=$(echo "${_i}_${_t}" |sed -e 's/\./_/g')

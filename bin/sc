@@ -63,7 +63,7 @@ test ! -z "$_conf" \
     
 
 if [ "x$(fn_defined sc_${action})" = "xyes" ]; then
-    set -e
+#    set -e
     eval "sc_${action} $@"
 else
     if [ ! -z "$action" ]; then

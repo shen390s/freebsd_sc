@@ -91,6 +91,6 @@ svc_restart() {
     _s="$1"
     shift
 
-    svc_stop "$1"  && \
-	svc_start "$1"
+    svc_stop "$_s"  && \
+	svc_start "$_s"
 }
