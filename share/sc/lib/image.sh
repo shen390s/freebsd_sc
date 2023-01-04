@@ -86,14 +86,26 @@ config_image()
     if [ -z "$_t" ]; then
 	_t="1.0"
     fi
-
+    
+    _op=$(echo "${_i}_${_t}" |sed -e 's/\./_/g')
+    
     load_role_config "$_i"
 
     run_command rm -Rf /var/cache/pot/${_i}_${_t}.xz*
+
+    if pot_existed "$_i"; then
+	run_command pot stop -p "$_i"
+	run_command pot destroy -p "$_i"
+    fi
+    
+    if pot_existed "$_op"; then
+	run_command pot destroy -p "$_op"
+    fi
+    
     run_command pot import -p "$_i" -t "$_t" \
 		-U $image_store_path
-    op=$(echo "${_i}_${_t}" |sed -e 's/\./_/g')
-    run_command pot clone -p "$_i" -P "$op"
+
+    run_command pot clone -p "$_i" -P "$_op"
 
     run_command pot mount-in -p "$_i" -d $TOP -m $sc_mountpoint
     run_command pot mount-in -p "$_i" -d $conf_mountpoint -m $conf_mountpoint

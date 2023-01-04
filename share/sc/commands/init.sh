@@ -6,7 +6,7 @@ sc_init() {
     test $# -gt 0 && shift
 
     if [ -z "$_role" ]; then
-	_role="master"
+	_role="server"
     fi
 
     for _stage in install config start; do
@@ -21,7 +21,7 @@ sc_init() {
 }
 
 sc_init_help() {
-    echo "init  [master | slave]  setup current host as node of cluster"
+    echo "init  setup current host as node of cluster"
 }
 
 add_commands init

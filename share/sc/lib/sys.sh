@@ -180,12 +180,20 @@ get_my_ip() {
     echo
 }
 
+pot_existed() {
+    local _name
+
+    _name="$1"
+
+    pot info -p "$_name" 2>&1 >/dev/null
+}
+
 create_pot() {
     local _name _base _net
 
     _name="$1" && shift
     
-    if pot info -p "$_name" 2>&1 >/dev/null; then
+    if pot_existed "$_name"; then
 	run_command pot destroy -F -r "$_name"
     fi
     

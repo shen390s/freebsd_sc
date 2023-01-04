@@ -1,10 +1,7 @@
-master_services="lockd statd pot nomad"
+server_services="lockd statd pot nomad"
 need_reboot="no"
 
-#consul_network="inherit"
-#traefik_network="inherit"
-
-role_master_install() {
+role_server_install() {
     local _s _d
 
     for _d in $conf_mountpoint $data_mountpoint; do
@@ -21,47 +18,53 @@ role_master_install() {
 	add_mount "$data_mountfrom" "$data_mountpoint" "nfs"
     fi
     
-    for _s in ${master_services}; do
+    for _s in ${server_services}; do
 	svc_install "$_s"
     done
 }
 
-role_master_config() {
+role_server_config() {
     local _s _role
     
-    for _s in ${master_services}; do
+    for _s in ${server_services}; do
 	svc_config "$_s"
 	svc_enable "$_s"
     done
 
-#    run_command mount -a
+    #    run_command mount -a
     
-    for _s in ${master_services}; do
+    for _s in ${server_services}; do
 	svc_start "$_s"
     done
 
     run_command mount -a
 
-    for _role in consul traefik; do
-	echo make role $_role...
-	if check_image "$_role" "1.0"; then
-	    :
-	else
-	    build_image "$_role" "1.0"
-	    export_image "$_role" "1.0"
-	fi
-	
-	deploy_image "$_role" "1.0" 
-    done
+    if master; then
+	for _role in consul traefik; do
+	    echo make role $_role...
+	    if check_image "$_role" "1.0"; then
+		:
+	    else
+		build_image "$_role" "1.0"
+		export_image "$_role" "1.0"
+	    fi
+	    
+	    deploy_image "$_role" "1.0" 
+	done
+    fi
 }
 
-role_master_start() {
+role_server_start() {
     local _role
 
-    for _role in consul traefik; do
-	run_command pot stop -p "$_role"
-	run_command pot  start -p "$_role"
-    done
+    if is_master; then
+	echo "Start pots: consul & traefik on master..."
+	
+	for _role in consul traefik; do
+	    run_command pot stop -p "$_role"
+	    run_command pot  start -p "$_role"
+	done
+    fi
 }
 
 # Local Variables:

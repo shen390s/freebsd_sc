@@ -1,8 +1,9 @@
 nomad_config_files() {
-    cat <<EOF
-nomad_client.hcl.t:client.hcl
-nomad_server.hcl.t:server.hcl
-EOF
+    echo "nomad_client.hcl.t:client.hcl"
+
+    if is_master; then
+	echo "nomad_server.hcl.t:server.hcl"
+    fi
 }
 
 nomad_render_config() {

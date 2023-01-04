@@ -67,3 +67,27 @@ list_cnt() {
     echo $#
 }
 
+in_list() {
+    local _it _lst _x
+
+    _it="$1"
+    _lst="$2"
+
+    for _x in $_lst; do
+	if [ "x${_it}" = "x${_x}" ]; then
+	    true
+	    return
+	fi
+    done
+
+    false
+}
+
+is_master() {
+    local _my_ip
+
+    _my_ip=$(get_my_ip)
+
+    in_list "${_my_ip}" "$servers"
+}
+
