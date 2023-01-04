@@ -1,15 +1,14 @@
 get_config() {
-    local _prefix _it _n
+    local _k _fn
 
-    _prefix="$1"
-    _it="$2"
-    shift 2
-    
-    if [ -z "${_prefix}" ]; then
-	_n="${_it}"
+    _k=$(echo "$1" |sed -e 's/\./_/g')
+    shift
+
+    _fn=$(printf "valueOf_%s" ${_k})
+
+    if [ "x$(fn_defined ${_fn})" = "xyes" ]; then
+	eval "${_fn}"
     else
-	_n="${_prefix}_${_it}"
+	echo
     fi
-    
-    eval "echo \$${_n}"
 }

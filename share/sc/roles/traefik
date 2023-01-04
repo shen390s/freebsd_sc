@@ -1,5 +1,8 @@
 role_traefik_services="traefik"
 
+valueOf_traefik_network() {
+    echo inherit
+}
 role_traefik_install() {
     local _s
 

@@ -24,6 +24,7 @@ build_image() {
     _name="$1" &&  shift
     _tag="$1" && shift
     
+    load_role_config "$_name"
     if ! create_pot "$_name"; then
 	echo "create pot $_name failed"
 	exit 1
@@ -51,6 +52,7 @@ export_image() {
     _name="$1"
     _tag="$2"
 
+    load_role_config "$_name"
     # FIXME:
     run_command pot stop -p "$_name"
     
@@ -74,38 +76,44 @@ export_image() {
     run_command pot destroy -p "$_name"
 }
 
-deploy_image() {
-    local _i _t _boot _op
+config_image()
+{
+    local _i _t _op
 
     _i="$1" 
     _t="$2" 
-    _boot="$3" 
 
     if [ -z "$_t" ]; then
 	_t="1.0"
     fi
 
-    if [ -z "$_boot" ]; then
-	_boot="no"
-    fi
-    
+    load_role_config "$_i"
+
     run_command rm -Rf /var/cache/pot/${_i}_${_t}.xz*
     run_command pot import -p "$_i" -t "$_t" \
 		-U $image_store_path
     op=$(echo "${_i}_${_t}" |sed -e 's/\./_/g')
     run_command pot clone -p "$_i" -P "$op"
 
-    if [ "x${_boot}" = "xyes" ]; then
-	run_command pot set-attr "$_i" -A start-at-boot -V yes
-    fi
-
     run_command pot mount-in -p "$_i" -d $TOP -m $sc_mountpoint
     run_command pot mount-in -p "$_i" -d $conf_mountpoint -m $conf_mountpoint
     run_command pot mount-in -p "$_i" -d $data_mountpoint -m $data_mountpoint
     run_command pot start -p "$_i"
 
-    run_helper "$_i" config "$_i"
+    run_helper "$_i" config "$_i"    
+}
 
-    echo deploy image  "$_i" done
+deploy_image() {
+    local _i _t _boot _op
+
+    _i="$1" 
+    _t="$2" 
+
+    if config_image "$_i" "$_t"; then
+	echo deploy image  "$_i" done
+	run_command pot set-attr -p "$_i" -A start-at-boot -V yes
+    else
+	echo config image "$_i" failed
+    fi
 }
 

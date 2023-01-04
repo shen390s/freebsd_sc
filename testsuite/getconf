@@ -1,10 +1,13 @@
+valueOf_test_key() {
+    echo "abcd"
+}
+
+valueOf_consul_bridge_mode() {
+    echo "inherit"
+}
 getconf_test() {
-    test_key="abcd"
-
-    echo get_config test_key: $(get_config "" test_key)
-    consul_bridge_mode="inherit"
-
-    echo get_config consul/bridge_mode: $(get_config "consul" "bridge_mode")
+    echo get_config test_key: $(get_config test.key)
+    echo get_config consul/bridge_mode: $(get_config consul.bridge.mode)
 }
 run_test() {
     getconf_test

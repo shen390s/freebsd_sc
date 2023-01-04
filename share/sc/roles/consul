@@ -1,7 +1,8 @@
 role_consul_services="consul"
 
-consul_network="inherit"
-
+valueOf_consul_network() {
+    echo inherit
+}
 role_consul_install() {
     local _s
 

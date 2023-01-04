@@ -189,12 +189,12 @@ create_pot() {
 	run_command pot destroy -F -r "$_name"
     fi
     
-    _net=$(get_config "$_name" "network")
+    _net=$(get_config "${_name}.network")
     if [ -z "$_net" ]; then
 	_net="public-bridge"
     fi
 
-    _base=$(get_config "$_name" "base")
+    _base=$(get_config "${_name}.base")
     if [ -z "$_base" ]; then
 	_base=$(uname -r |awk -F- '{print $1}')
     fi
@@ -263,5 +263,16 @@ run_helper() {
 	    
 	    pot_exec "$_jail" $_helper -f /var/tmp/sc.conf "$@"
 	fi
+    fi
+}
+
+load_role_config() {
+    local _role _cf
+
+    _role="$1"
+    _cf=$TOP/share/sc/roles/$_role
+
+    if [ -f $_cf ]; then
+	. $_cf
     fi
 }

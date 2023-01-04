@@ -14,6 +14,13 @@ mk_boot_config() {
     fi
 }
 
+pot_install() {
+    pkg_install git pot
+
+    # Fixme
+    true
+}
+
 patch_pot() {
     local _f _f1 _d
 

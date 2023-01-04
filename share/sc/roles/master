@@ -1,8 +1,8 @@
 master_services="lockd statd pot nomad"
 need_reboot="no"
 
-consul_network="inherit"
-traefik_network="inherit"
+#consul_network="inherit"
+#traefik_network="inherit"
 
 role_master_install() {
     local _s _d
@@ -51,7 +51,7 @@ role_master_config() {
 	    export_image "$_role" "1.0"
 	fi
 	
-	deploy_image "$_role" "1.0"
+	deploy_image "$_role" "1.0" 
     done
 }
 
