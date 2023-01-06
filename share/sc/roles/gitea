@@ -1,1 +1,17 @@
-services="gitea"
+valueOf_gitea_services() {
+    cat <<EOF
+sshd:tcp:3022:10s:20s
+gitea:http:3000:10s:20s
+EOF
+}
+
+role_gitea_install() {
+    svc_install gitea
+}
+
+role_gitea_config() {
+    svc_config gitea
+}
+# Local Variables:
+# mode: sh
+# End:

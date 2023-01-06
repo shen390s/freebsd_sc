@@ -10,6 +10,15 @@ fn_defined() {
     fi
 }
 
+value_of_var() {
+    local _var _s
+
+    _var="$1"
+    _s=$(printf 'cat <<EOF\n${%s}\nEOF\n' "$_var")
+
+    eval "$_s"
+}
+
 load_conf() {
     local _f
 
@@ -39,16 +48,27 @@ run_command() {
 }
 
 save_command_output() {
-    local _f 
+    local _f _fn 
 
     _f="$1"
     shift
 
     if is_dry_run; then
-	echo Following output data will be saved to "$_f":
+	if [ "x${_f}" = "x-" ]; then
+	    _fn="STDOUT"
+	else
+	    _fn=${_f}
+	fi
+	
+	echo Following output data will be saved to "$_fn": >&2
+
 	eval "$@"
     else
-	eval "$@" >> "$_f"
+	if [ "x${_f}" = "x-" ]; then
+	    eval "$@"
+	else
+	    eval "$@" >> "$_f"
+	fi
     fi
 }
 
@@ -142,6 +162,7 @@ try_get_netif_ip() {
     for _idx in $(seq 0 $_max); do
 	_netif=$(printf "$_prefix" "$_idx")
 	_ip=$(ifconfig "$_netif" |\
+		  grep -v inet6 |\
 		  grep inet |\
 		  head -n 1 |\
 		  awk '{print $2}')
@@ -194,7 +215,7 @@ create_pot() {
     _name="$1" && shift
     
     if pot_existed "$_name"; then
-	run_command pot destroy -F -r "$_name"
+	run_command pot destroy -F -r -p "$_name"
     fi
     
     _net=$(get_config "${_name}.network")
@@ -235,10 +256,18 @@ pot_exec() {
 	    _z=""
 	fi
 	
-	eval "dry_run=yes /bin/sh $_z $_nc $@"
+	# check whether helper is run
+	if [ "x$(basename ${_c})" = "xhelper" ]; then
+	    eval "dry_run=yes /bin/sh $_z $_nc $@"
+	fi
     else
-	run_command pot exec -p "$_p" \
-		    "$_c" "$@"
+	if [ "x$debug" = "xyes" ]; then
+	    run_command pot exec -p "$_p" \
+			/bin/sh "-x" "$_c" "$@"
+	else
+	    run_command pot exec -p "$_p" \
+			"$_c" "$@"
+	fi
     fi
 }
 

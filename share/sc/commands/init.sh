@@ -2,12 +2,7 @@
 sc_init() {
     local _role _stage _status _d
 
-    _role="$1"
-    test $# -gt 0 && shift
-
-    if [ -z "$_role" ]; then
-	_role="server"
-    fi
+    _role="server"
 
     for _stage in install config start; do
 	run_helper "" $_stage "$_role"

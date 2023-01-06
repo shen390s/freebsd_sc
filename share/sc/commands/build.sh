@@ -1,20 +1,12 @@
 sc_build() {
-    local _role _xfile
+    local _role _tag
 
     _role="$1"
     shift 1
-    _xfile="$TOP/share/sc/roles/$_role"
-
-    if [ -f "$_xfile" ]; then
-	. "$_xfile" 
-	build_image "$_role"
-    else
-	cat <<EOF
-$_xfile can not be found.
-EOF
-	exit 1
-    fi
 	
+    _tag="1.0"
+
+    build_image "$_role" "$_tag"
 }
 
 sc_build_help() {

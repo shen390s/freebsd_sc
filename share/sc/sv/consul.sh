@@ -15,7 +15,7 @@ consul_render_config() {
     _my_ip=$(get_my_ip)
     _dc="$datacenter"
     _encrypt="$encrypt"
-    _join_list=$(mk_join_list "$servers" |sed -e 's/\"/\\\"/g' -e 's/ //g')
+    _join_list=$(mk_join_list "$servers" |sed  -e 's/ //g')
     _vote_cnt=$(list_cnt "$servers")
 
     if [ -f $_s ]; then

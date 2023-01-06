@@ -1,29 +1,12 @@
-do_configure() {
-    true
-}
-
 sc_config() {
-    local _role _xfile _tag
+    local _role _tag
 
-    _role="$1" && shift 1
-    _tag="$1" && shift
+    _role="$1" 
+    shift
 
-    if [ -z "$_tag" ]; then
-	_tag="1.0"
-    fi
-    
-    _xfile="$TOP/share/sc/roles/$_role"
+    _tag="1.0"
 
-    if [ -f "$_xfile" ]; then
-	. "$_xfile" 
-	do_configure "$_role" "$_tag"
-    else
-	cat <<EOF
-$_xfile can not be found.
-EOF
-	exit 1
-    fi
-	
+    config_image "$_role" "$_tag"
 }
 
 sc_mkconfig() {

@@ -1,8 +1,8 @@
-netif_names="em%d re%d epair%db"
+netif_names="em%d re%d en%d epair%db"
 datacenter=dc1
 domain=shenrs.eu
 encrypt="wHFZLYQLMs3x6Za1d6P+sOmyo7wW7bTWv++t5jpN8Mk="
-servers="192.168.1.31 192.168.1.32 192.168.1.33"
+servers="192.168.1.31 192.168.1.32 192.168.1.33 "
 sc_mountpoint="/mnt/sc/tools"
 conf_mountpoint="/mnt/sc/conf"
 # conf_mountfrom=192.168.1.3:/sc/conf

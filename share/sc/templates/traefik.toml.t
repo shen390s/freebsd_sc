@@ -31,7 +31,7 @@
   [entryPoints.http]
     address = ":8080"
 
-  %%ENTRY_POINTS%%
+%%ENTRY_POINTS%%
 ################################################################
 # Traefik logs configuration
 ################################################################
@@ -138,4 +138,4 @@
     defaultRule = "Host(`{{ .Name }}.%%DATACENTER%%.%%DOMAIN%%`)"
     stale = false
     [providers.consulCatalog.endpoint]
-    address = "http://%%MY_IP%%:8500"
+       address = "http://%%MY_IP%%:8500"

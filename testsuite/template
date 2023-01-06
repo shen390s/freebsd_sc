@@ -1,0 +1,46 @@
+job_render_test() {
+    job_render "gitea" "-"
+}
+
+traefik_render_test() {
+    traefik_render_config "$TOP/share/sc/templates/traefik.toml.t" "-"
+}
+
+nomad_render_configs() {
+    local _s _it
+
+    for _it in $(nomad_config_files |xargs echo); do
+	_s=$(echo $_it |awk -F: '{print $1}')
+	_s=$TOP/share/sc/templates/$_s
+
+	nomad_render_config "$_s" "-"
+    done
+}
+
+consul_render_configs() {
+    local _s _it
+
+    for _it in $(consul_config_files |xargs echo); do
+	_s=$(echo $_it |awk -F: '{print $1}')
+	_s=$TOP/share/sc/templates/$_s
+
+	consul_render_config "$_s" "-"
+    done
+}
+
+gitea_app_ini() {
+    gitea_mk_app_ini "-"
+}
+
+run_test() {
+    servers="$servers $(get_my_ip)"
+    job_render_test
+    traefik_render_test
+    nomad_render_configs
+    consul_render_configs
+    gitea_app_ini
+}
+
+# Local Variables:
+# mode: sh
+# End:

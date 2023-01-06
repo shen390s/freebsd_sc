@@ -5,15 +5,14 @@ traefik_pkgs() {
 mk_entrypoints() {
     local _it _n _v _data
 
-    _data=""
     for _it in $entry_points; do
 	_n=$(echo $_it |awk -F: '{print $1}')
 	_v=$(echo $_it |awk -F: '{print $2}')
 
-	_data="$_data%%NEWLINE%%%%TAB%%[entryPoints.${_n}]%%NEWLINE%%%%TAB%%%%TAB%%address=\\\":${_v}\\\"%%NEWLINE%%"
+	printf "  [entryPoints.%s]\n" ${_n}
+	printf "     address = \":%s\"\n" ${_v}
     done
 
-    echo $_data
 }
 traefik_render_config() {
     local _s _d _entrypoints _dc _domain _my_ip
