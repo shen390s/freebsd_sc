@@ -29,7 +29,7 @@ for (idx=1; idx <= length(a); idx ++) {
 }
 printf("\n");
 $(echo "s=\"rm -Rf ${_df}\";")
-$(echo 'system(s);')
+system(s);
 }
 EOF
 }

@@ -8,7 +8,7 @@ service {
 	    ]
 
     name = "%%SERVICE_NAME%%"
-    port = "%%SERVICE_PORT%%"
+    port = "%%SERVICE_NAME%%"
 
     check {
          type = "%%SERVICE_CHECK_TYPE%%"

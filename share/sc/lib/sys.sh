@@ -215,6 +215,10 @@ create_pot() {
     _name="$1" && shift
     
     if pot_existed "$_name"; then
+	if [ "x${use_existed_pot}" = "xyes" ]; then
+	    return
+	fi
+	
 	run_command pot destroy -F -r -p "$_name"
     fi
     
@@ -309,7 +313,11 @@ load_role_config() {
     _role="$1"
     _cf=$TOP/share/sc/roles/$_role
 
-    if [ -f $_cf ]; then
-	. $_cf
+    if [ ! -f $_cf ]; then
+	echo "Can not found role $_role"
+	false
+	return
     fi
+    
+    . $_cf
 }

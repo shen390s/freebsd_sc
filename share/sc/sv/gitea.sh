@@ -30,24 +30,6 @@ gitea_mk_git_home() {
     run_command pw usermod -n git -d $_d
 }
 
-mk_sshd_config() {
-    local _of
-
-    _of="$1"
-
-    cat $_of |sed -e 's/^Port[ \t\b]*=.*$//g'
-    echo "Port = 3022"
-}
-
-gitea_update_sshd_config() {
-    local _d
-
-    _d=/etc/ssh/sshd_config
-    run_command cp $_d $_d.orig
-    
-    save_command_output /etc/ssh/sshd_config mk_sshd_config $_d.orig
-}
-
 gitea_mk_app_ini() {
     local _my_ip _dc _dm _s _d _dir _data
 
@@ -81,7 +63,6 @@ gitea_mk_app_ini() {
 gitea_config() {
     gitea_mkdirs
     gitea_mk_app_ini ${conf_mountpoint}/gitea/app.ini  
-    gitea_update_sshd_config
 }
 
 gitea_enable() {

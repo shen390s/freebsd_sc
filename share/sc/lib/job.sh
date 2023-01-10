@@ -35,7 +35,7 @@ EOF
 
 
 job_mk_services() {
-    local _it _s _role _sn _ty _pt _ic _io _rl
+    local _it _s _role _sn _ty _pt _ic _io _rl _tc
 
     _role="$1"
 
@@ -61,11 +61,14 @@ job_mk_services() {
 
 	_rl=$(job_mk_rule "$_role" "$_ty")
 
+	# always use tcp service check
+	_tc="tcp"
+
 	fill_kv_file "$_s" "-" \
 		     SERVICE_NAME:_sn \
 		     SERVICE_TYPE:_ty \
 		     SERVICE_PORT:_pt \
-		     SERVICE_CHECK_TYPE:_ty \
+		     SERVICE_CHECK_TYPE:_tc \
 		     SERVICE_CHECK_INTERVAL:_ic \
 		     SERVICE_CHECK_TIMEOUT:_io \
 		     SERVICE_RULE:_rl
@@ -118,13 +121,13 @@ job_mk_port_maps() {
 	return
     fi
 
-    printf "port_map = {\n"
+    printf "\t\tport_map = {\n"
     for _it in $(get_config "${_r}.services"); do
 	_sn=$(echo $_it|awk -F: '{print $1}')
 	_pt=$(echo $_it|awk -F: '{print $3}')
-	printf "\t\t%s = \"%s\"\n" ${_sn} ${_pt}
+	printf "\t\t\t%s = \"%s\"\n" ${_sn} ${_pt}
     done
-    printf "\t    }\n"
+    printf "\t\t}\n"
 }
 
 job_render() {

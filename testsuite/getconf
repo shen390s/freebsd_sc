@@ -8,6 +8,9 @@ valueOf_consul_bridge_mode() {
 getconf_test() {
     echo get_config test_key: $(get_config test.key)
     echo get_config consul/bridge_mode: $(get_config consul.bridge.mode)
+
+    load_role_config gitea
+    echo gitea.ssh.port: $(get_config gitea.ssh.port)
 }
 run_test() {
     getconf_test

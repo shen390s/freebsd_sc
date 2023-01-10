@@ -4,13 +4,15 @@ sc_deploy() {
     _role="$1"
     shift 1
 
-    _job="$TOP/share/sc/jobs/${_role}.job"
-    if [ -f "$_job" ]; then
-	nomad run "$_job"
+    if load_role_config "$_role" ; then
+	_job=$(mktemp /tmp/${_role}.XXXXX)
+	job_render "$_role" "$_job"
+	cat "$_job"
+	run_command nomad run "$_job"
+	rm -Rf "$_job"
     else
-	cat <<EOF
-nomad job "$_job" can not be found
-EOF
+	echo "role ${_role} can not be found"
+	exit 1
     fi
 }
 

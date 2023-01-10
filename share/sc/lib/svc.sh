@@ -23,10 +23,20 @@ svc_generic() {
 }
 
 svc_pkgs() {
+    local _s
+
+    _s="$1"
+    shift
+    
     svc_generic "$1" "pkgs" "$@"
 }
 
 svc_requires() {
+    local _s
+
+    _s="$1"
+    shift
+    
     svc_generic "$1" "requires" "$@"
 }
 
@@ -34,6 +44,8 @@ svc_install() {
     local _s _pkgs
 
     _s="$1"
+    shift
+    
     if [ "x$(fn_defined ${_s}_install)" = "xyes" ]; then
 	svc_call "$_s" "install" "$@"
     else
@@ -45,7 +57,12 @@ svc_install() {
 }
 
 svc_config() {
-    svc_generic "$1" "config" "$@"
+    local _s
+
+    _s="$1"
+    shift
+    
+    svc_generic "$_s" "config" "$@"
 }
 
 svc_enable() {

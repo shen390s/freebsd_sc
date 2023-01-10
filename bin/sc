@@ -15,7 +15,7 @@ sc_help() {
     printf "usage: %s [-f config ] command [command options] \n" $APP
     for _c in ${sc_commands}; do
 	if [ "x$(fn_defined sc_${_c}_help)" = "xyes" ]; then
-	    printf "\t - %s\n" "$(eval sc_${_c}_help)"
+	    printf "\t - ${_c}\n\t   %s\n" "$(eval sc_${_c}_help)"
 	else
 	    printf "\t - %s\n" $_c
 	fi

@@ -1,12 +1,23 @@
+valueOf_gitea_port() {
+    echo 3000
+}
+
+valueOf_gitea_ssh_port() {
+    echo 3022
+}
+
 valueOf_gitea_services() {
     cat <<EOF
-sshd:tcp:3022:10s:20s
-gitea:http:3000:10s:20s
+giteassh:tcp:$(get_config "gitea.ssh.port"):10s:20s
+gitea:http:$(get_config "gitea.port"):10s:20s
 EOF
 }
 
 role_gitea_install() {
     svc_install gitea
+    svc_config sshd "$(get_config gitea.ssh.port)"
+    svc_enable sshd
+    svc_start sshd
 }
 
 role_gitea_config() {
