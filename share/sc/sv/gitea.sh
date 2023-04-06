@@ -31,13 +31,15 @@ gitea_mk_git_home() {
 }
 
 gitea_mk_app_ini() {
-    local _my_ip _dc _dm _s _d _dir _data
+    local _my_ip _dc _dm _s _d _dir _data _pt1 _pt2
 
     _d="$1"
     _my_ip=$(get_my_ip)
     _dc="$datacenter"
     _dm="$domain"
     _data="$data_mountpoint"
+    _pt1=$(get_config "gitea.port")
+    _pt2=$(get_config "gitea.ssh.port")
 
     _s="$TOP/share/sc/templates/gitea_app.ini.t"
 
@@ -56,7 +58,9 @@ gitea_mk_app_ini() {
 		     MY_IP:_my_ip \
 		     DATACENTER:_dc \
 		     DOMAIN:_dm \
-		     DATA_DIR:_data
+		     DATA_DIR:_data \
+		     HTTP_PORT:_pt1 \
+		     SSH_PORT:_pt2
     fi		     
 }
 

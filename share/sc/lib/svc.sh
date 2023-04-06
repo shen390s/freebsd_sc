@@ -28,7 +28,7 @@ svc_pkgs() {
     _s="$1"
     shift
     
-    svc_generic "$1" "pkgs" "$@"
+    svc_generic "$_s" "pkgs" "$@"
 }
 
 svc_requires() {
@@ -37,7 +37,7 @@ svc_requires() {
     _s="$1"
     shift
     
-    svc_generic "$1" "requires" "$@"
+    svc_generic "$_s" "requires" "$@"
 }
 
 svc_install() {

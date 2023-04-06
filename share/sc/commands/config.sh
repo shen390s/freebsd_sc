@@ -4,7 +4,10 @@ sc_config() {
     _role="$1" 
     shift
 
-    _tag="1.0"
+    _tag="$1"
+    if [ -z "$_tag" ]; then
+	_tag="1.0"
+    fi
 
     config_image "$_role" "$_tag"
 }

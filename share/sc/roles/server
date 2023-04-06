@@ -39,7 +39,7 @@ role_server_config() {
 
     run_command mount -a
 
-    if master; then
+    if is_master; then
 	for _role in consul traefik; do
 	    echo make role $_role...
 	    if check_image "$_role" "1.0"; then

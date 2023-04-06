@@ -35,7 +35,7 @@ EOF
 
 
 job_mk_services() {
-    local _it _s _role _sn _ty _pt _ic _io _rl _tc
+    local _it _s _role _sn _ty _pt _ic _io _rl _tc _se
 
     _role="$1"
 
@@ -60,6 +60,7 @@ job_mk_services() {
 	fi
 
 	_rl=$(job_mk_rule "$_role" "$_ty")
+	_se=$(get_svc_entrypoint "$_sn" "$_ty" "$_pt")
 
 	# always use tcp service check
 	_tc="tcp"
@@ -71,7 +72,8 @@ job_mk_services() {
 		     SERVICE_CHECK_TYPE:_tc \
 		     SERVICE_CHECK_INTERVAL:_ic \
 		     SERVICE_CHECK_TIMEOUT:_io \
-		     SERVICE_RULE:_rl
+		     SERVICE_RULE:_rl \
+		     SERVICE_ENTRYPOINT:_se
     done
 }
 
@@ -100,6 +102,7 @@ job_mk_mounts() {
 	_sep=","
     done
 
+    _m="$_m,\"$TOP:$sc_mountpoint\""
     echo "$_m" |sed -e 's/ //g'
 }
 
@@ -158,8 +161,8 @@ job_render() {
     _il="file://$image_store_path"
     _pn="$_job"
     _pt="1.0"
-    _psc="sleep 9999"
-    _psa=""
+    _psc="$sc_mountpoint/share/sc/tools/helper"
+    _psa="\"start\",\"${_role}\""
     _ppm=$(job_mk_port_maps "$_role")
     _pnm=$(get_config "${_role}.network")
     case "${_pnm}" in

@@ -3,7 +3,7 @@ service {
             "metrics",
 	    "%%SERVICE_NAME%%",
 	    "traefik.enable=true",
-	    "traefik.%%SERVICE_TYPE%%.routers.%%SERVICE_NAME%%.entrypoints=%%SERVICE_NAME%%",
+	    "traefik.%%SERVICE_TYPE%%.routers.%%SERVICE_NAME%%.entrypoints=%%SERVICE_ENTRYPOINT%%",
 	    "traefik.%%SERVICE_TYPE%%.routers.%%SERVICE_NAME%%.rule=%%SERVICE_RULE%%"
 	    ]
 

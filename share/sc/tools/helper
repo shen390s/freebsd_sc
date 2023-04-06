@@ -64,8 +64,8 @@ if [ ! -z "$_conf" ]; then
     fi
 fi
 
-if [ -f $TOP/share/sc/roles/$role ]; then
-    . $TOP/share/sc/roles/$role
+if load_role_config "$role"; then
+    :
 else
     echo role "$role" can not be found
     exit 1

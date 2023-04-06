@@ -321,3 +321,58 @@ load_role_config() {
     
     . $_cf
 }
+
+get_svc_entrypoint() {
+    local _sn _ty _pt _it _en _ept
+
+    _sn="$1"
+    _ty="$2"
+    _pt="$3"
+    
+    for _it in $entry_points; do
+	_en=$(echo $_it |awk -F: '{print $1}')
+	_ept=$(echo $_it |awk -F: '{print $2}')
+	if [ "x$_pt" = "x$_ept" ]; then
+	    echo $_en
+	    return
+	fi
+    done
+
+    case "$_ty" in
+	http)
+	    echo http
+	    ;;
+	https)
+	    echo websecure
+	    ;;
+	*)
+	    echo
+	    ;;
+    esac
+}
+
+get_port() {
+    local _sn _it _en _pt
+
+    _sn="$1"
+    
+    for _it in $entry_points; do
+	_en=$(echo $_it |awk -F: '{print $1}')
+	if [ "x$_en" = "x$_sn" ]; then
+	    echo $_it |awk -F: '{print $2}'
+	    return
+	fi
+    done
+
+    case "$_sn" in
+	http)
+	    echo 8080
+	    ;;
+	websecure)
+	    echo 9443
+	    ;;
+	*)
+	    echo 8080
+	    ;;
+    esac
+}

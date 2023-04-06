@@ -51,13 +51,13 @@ PROVIDER_CONFIG = %%DATA_DIR%%/gitea/data/sessions
 [server]
 DOMAIN       = gitea.%%DATACENTER%%.%%DOMAIN%%
 HTTP_ADDR    = %%MY_IP%%
-HTTP_PORT    = 3000
-ROOT_URL     = http://gitea.%%DATACENTER%%.%%DOMAIN%%:8080/
+HTTP_PORT    = %%HTTP_PORT%%
+ROOT_URL     = http://gitea.%%DATACENTER%%.%%DOMAIN%%:%%HTTP_PORT%%/
 # ROOT_URL = http://localhost:3000/
 DISABLE_SSH  = false
 # START_SSH_SERVER = true
 SSH_DOMAIN   = gitea.%%DATACENTER%%.%%DOMAIN%%
-SSH_PORT     = 3022
+SSH_PORT     = %%SSH_PORT%%
 OFFLINE_MODE = false
 APP_DATA_PATH = %%DATA_DIR%%/gitea/data
 

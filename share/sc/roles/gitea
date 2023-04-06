@@ -1,9 +1,9 @@
 valueOf_gitea_port() {
-    echo 3000
+    echo $(get_port "http")
 }
 
 valueOf_gitea_ssh_port() {
-    echo 3022
+    echo $(get_port "giteassh")
 }
 
 valueOf_gitea_services() {
@@ -22,6 +22,14 @@ role_gitea_install() {
 
 role_gitea_config() {
     svc_config gitea
+}
+
+role_gitea_start() {
+    svc_start sshd
+    run_command su git -c "GITEA_CUSTOM=/mnt/sc/data/gitea GITEA_WORK_DIR=/usr/local/share/gitea gitea web"
+    while : ; do
+	  sleep 100
+    done
 }
 # Local Variables:
 # mode: sh

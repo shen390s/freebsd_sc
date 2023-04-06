@@ -102,6 +102,13 @@ config_image()
 	run_command pot destroy -p "$_op"
     fi
     
+    if check_image "$_i" "$_t"; then
+	:
+    else
+	build_image "$_i" "$_t"
+	export_image "$_i" "$_t"
+    fi
+    
     run_command pot import -p "$_i" -t "$_t" \
 		-U $image_store_path
 

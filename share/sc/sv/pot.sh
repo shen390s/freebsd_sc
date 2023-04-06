@@ -25,7 +25,7 @@ patch_pot() {
     local _f _f1 _d
 
     _d=/usr/local/share/pot
-    for _f in $TOP/share/sc/patches/pot/*.patch; do
+    for _f in $(ls $TOP/share/sc/patches/pot/*.patch 2>/dev/null); do
 	_f1=$(basename "$_f")
 	if [ -f $_d/.${_f1}.done ]; then
 	    continue
