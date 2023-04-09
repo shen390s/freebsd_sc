@@ -1,0 +1,47 @@
+
+port_test() {
+    local _it1 _it2 _t _port
+
+    _t="$1"
+    for _it1 in h1 h2 h3  ; do
+	for _it2 in s1 s2 s3 s4; do
+	    _port=$(get_port "$_t" "$_it2" "$_it1")
+	    echo get_port "$_t" "$_it2" on "$_it1" = "$_port"
+	done
+    done
+}
+
+get_svc_entry_test() {
+    local _it1 _it2 _t _entry
+
+    _t="$1"
+    for _it1 in h1 h2 h3  ; do
+	for _it2 in s1 s2 s3 s4; do
+	    _entry=$(get_svc_entrypoint "$_t" "$_it2" "$_it1")
+	    echo get_svc_entrypoint "$_t" "$_it2" on "$_it1" = "$_entry"
+	done
+    done    
+
+    echo "all entrypoints: $(get_all_entrypoints)"
+}
+run_test() {
+    portdb_path=/tmp/portdb
+    
+    portdb_init
+    
+    if [ -d $portdb_path ]; then
+	for f in $portdb_path/*; do
+	    echo ========== $f =======
+	    cat $f
+	    echo
+	done
+    fi
+
+    port_test http
+    port_test tcp
+    get_svc_entry_test http
+    get_svc_entry_test tcp
+}
+# Local Variables:
+# mode: sh
+# End:

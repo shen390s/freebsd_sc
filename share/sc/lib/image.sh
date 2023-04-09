@@ -53,8 +53,12 @@ export_image() {
     _tag="$2"
 
     load_role_config "$_name"
-    # FIXME:
-    run_command pot stop -p "$_name"
+
+    if pot_existed "$_name"; then
+	run_command pot stop -p "$_name"
+    else
+	build_image "$_name" "$_tag"
+    fi
     
     run_command rm /opt/pot/jails/$_name/conf/fscomp.conf
     run_command touch /opt/pot/jails/$_name/conf/fscomp.conf

@@ -22,14 +22,6 @@
 # Optional
 # Default:
 [entryPoints]
-  [entryPoints.traefik]
-    address = ":9002"
-
-  [entryPoints.websecure]
-    address = ":9443"
-
-  [entryPoints.http]
-    address = ":8080"
 
 %%ENTRY_POINTS%%
 ################################################################

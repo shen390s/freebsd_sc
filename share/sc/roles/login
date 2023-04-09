@@ -1,2 +1,42 @@
 services="sshd ttyd"
 users="rshen ann apple"
+login_port=2022
+ttyd_port=7681
+
+valueOf_login_ssh_port() {
+    echo ${login_port}
+}
+
+valueOf_login_ttyd_port() {
+    echo ${ttyd_port}
+}
+
+role_login_install() {
+    svc_install ttyd
+    svc_config sshd "$(get_config login.ssh.port)"
+    svc_config ttyd "$(get_config login.ttyd.port)"
+    svc_enable sshd
+    svc_enable ttyd
+    svc_start sshd
+    svc_start ttyd
+}
+
+role_login_config() {
+    # need to register exclusive tcp port
+    register_port "login" 
+#    register_port "ttyd" 7681
+    svc_config ttyd
+    # config users
+}
+
+role_login_config() {
+    svc_start sshd
+    svc_start ttyd
+
+    while :; do
+	sleep 100
+    done
+}
+# Local Variables:
+# mode: sh
+# End:

@@ -20,7 +20,9 @@ role_traefik_config() {
 }
 
 role_traefik_start() {
-    true
+    role_traefik_config
+
+    service traefik start
 }
 # Local Variables:
 # mode: sh

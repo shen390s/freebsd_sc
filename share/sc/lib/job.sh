@@ -60,7 +60,7 @@ job_mk_services() {
 	fi
 
 	_rl=$(job_mk_rule "$_role" "$_ty")
-	_se=$(get_svc_entrypoint "$_sn" "$_ty" "$_pt")
+	_se=$(get_svc_entrypoint "$_ty" "$_sn" "$_role")
 
 	# always use tcp service check
 	_tc="tcp"
@@ -127,8 +127,8 @@ job_mk_port_maps() {
     printf "\t\tport_map = {\n"
     for _it in $(get_config "${_r}.services"); do
 	_sn=$(echo $_it|awk -F: '{print $1}')
-	_pt=$(echo $_it|awk -F: '{print $3}')
-	printf "\t\t\t%s = \"%s\"\n" ${_sn} ${_pt}
+	_pt=$(echo $_it|awk -F: '{print $2}')
+	printf "\t\t\t%s = \"%s\"\n" ${_sn} $(get_port "$_pt" "$_sn" "$_r")
     done
     printf "\t\t}\n"
 }

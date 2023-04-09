@@ -1,8 +1,14 @@
 #!/bin/sh
 
 APP=$(basename $0)
+REALPATH=$(which realpath)
+
+if [ -z "$REALPATH" ]; then
+    REALPATH=$(which grealpath)
+fi
+
 _appdir=$(dirname $0)
-TOP=$(realpath $(cd $_appdir/.. && pwd))
+TOP=$($REALPATH $(cd $_appdir/.. && pwd))
 
 export APP TOP
 

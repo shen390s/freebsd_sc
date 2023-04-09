@@ -33,6 +33,9 @@ gitea_app_ini() {
 }
 
 run_test() {
+    # init portdb
+    portdb_path=/tmp/portdb
+    portdb_init
     servers="$servers $(get_my_ip)"
     job_render_test
     traefik_render_test

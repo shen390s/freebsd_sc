@@ -3,9 +3,11 @@ traefik_pkgs() {
 }
 
 mk_entrypoints() {
-    local _it _n _v _data
+    local _it _n _v _data _entrys 
 
-    for _it in $entry_points; do
+    _entrys=$(get_all_entrypoints)
+    
+    for _it in $_entrys; do
 	_n=$(echo $_it |awk -F: '{print $1}')
 	_v=$(echo $_it |awk -F: '{print $2}')
 
