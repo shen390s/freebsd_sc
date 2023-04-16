@@ -67,7 +67,6 @@ test ! -z "$_conf" \
     && CONF="$_conf" \
     && export CONF
     
-
 if [ "x$(fn_defined sc_${action})" = "xyes" ]; then
 #    set -e
     eval "sc_${action} $@"

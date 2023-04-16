@@ -34,7 +34,8 @@ gitea_app_ini() {
 
 run_test() {
     # init portdb
-    portdb_path=/tmp/portdb
+    PORTDB_PATH=/tmp/portdb
+    export PORTDB_PATH
     portdb_init
     servers="$servers $(get_my_ip)"
     job_render_test

@@ -25,8 +25,9 @@ get_svc_entry_test() {
     echo "all entrypoints: $(get_all_entrypoints)"
 }
 run_test() {
-    portdb_path=/tmp/portdb
-    
+    PORTDB_PATH=/tmp/portdb
+    export PORTDB_PATH
+
     portdb_init
     
     if [ -d $portdb_path ]; then

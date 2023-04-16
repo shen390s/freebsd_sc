@@ -22,7 +22,8 @@ role_consul_config() {
 }
 
 role_consul_start() {
-    true
+    role_consul_config
+    svc_start consul
 }
 # Local Variables:
 # mode: sh

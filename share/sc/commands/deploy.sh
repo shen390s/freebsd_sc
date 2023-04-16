@@ -16,8 +16,24 @@ sc_deploy() {
     fi
 }
 
+sc_deployimage() {
+    local _role _tag
+
+    _role="$1"
+    _tag="$2"
+
+    if [ -z "$_tag" ]; then
+	_tag="1.0"
+    fi
+
+    deploy_image "$_role" "$_tag"
+}
+
 sc_deploy_help() {
     echo deploy service
 }
 
-add_commands deploy
+sc_deployimage_help() {
+    echo deployimage name tag
+}
+add_commands deploy deployimage

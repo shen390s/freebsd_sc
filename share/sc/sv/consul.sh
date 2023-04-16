@@ -72,4 +72,6 @@ consul_start() {
 
 consul_stop() {
     run_command service consul stop
+    # ignore errors
+    true
 }

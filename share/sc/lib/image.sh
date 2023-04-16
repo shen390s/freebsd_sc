@@ -135,6 +135,9 @@ deploy_image() {
     if config_image "$_i" "$_t"; then
 	echo deploy image  "$_i" done
 	run_command pot set-attr -p "$_i" -A start-at-boot -V yes
+	run_command pot set-cmd -p "$_i" -c "'$sc_mountpoint/share/sc/tools/helper -f /var/tmp/sc.conf start $_i'"
+	run_command pot stop "$_i"
+	run_command pot start "$_i"
     else
 	echo config image "$_i" failed
     fi

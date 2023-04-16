@@ -1,9 +1,14 @@
 # routes for port management
 
-portdb_path=$conf_mountpoint/traefik/portdb
-
+portdb_path() {
+    if [ -z "$PORTDB_PATH" ]; then
+	echo $conf_mountpoint/traefik/portdb
+    else
+	echo $PORTDB_PATH
+    fi
+}
 portdb_http_init() {
-    cat >$portdb_path/httpdb <<EOF
+    cat >$(portdb_path)/httpdb <<EOF
 traefik,9002,traefik
 websecure,9443,
 http,8080,
@@ -11,17 +16,17 @@ EOF
 }
 
 portdb_tcp_init() {
-    touch $portdb_path/tcpdb
+    touch $(portdb_path)/tcpdb
 }
 
 portdb_init() {
     local _next_tcp_port _next_http_port
     
-    if [ ! -d ${portdb_path} ]; then
-	mkdir -p $portdb_path
+    if [ ! -d $(portdb_path) ]; then
+	mkdir -p $(portdb_path)
     fi
 
-    if [ ! -f ${portdb_path}/meta ]; then
+    if [ ! -f $(portdb_path)/meta ]; then
 	_next_tcp_port=${sc_tcp_start_port}
 	_next_http_port=${sc_http_start_port}
 
@@ -33,7 +38,7 @@ portdb_init() {
 	    _next_http_port=8088
 	fi
 	
-	cat >${portdb_path}/meta <<EOF
+	cat >$(portdb_path)/meta <<EOF
 NEXT_TCP_PORT=$_next_tcp_port
 NEXT_HTTP_PORT=$_next_http_port
 EOF
@@ -49,12 +54,12 @@ get_next_port() {
 
     case "$_t" in
 	tcp)
-	    cat ${portdb_path}/meta | \
+	    cat $(portdb_path)/meta | \
 		grep "NEXT_TCP_PORT=" | \
 		awk -F= '{print $2}'
 	    ;;
 	http)
-	    cat ${portdb_path}/meta | \
+	    cat $(portdb_path)/meta | \
 		grep "NEXT_HTTP_PORT=" | \
 		awk -F= '{print $2}'
 	    ;;
@@ -70,18 +75,18 @@ update_next_port() {
     _t="$1"
     _v="$2"
 
-    cp ${portdb_path}/meta ${portdb_path}/meta.tmp
+    cp $(portdb_path)/meta $(portdb_path)/meta.tmp
     if [ "x$_t" = "xtcp" ]; then
-	(cat ${portdb_path}/meta.tmp | grep -v "NEXT_TCP_PORT="
+	(cat $(portdb_path)/meta.tmp | grep -v "NEXT_TCP_PORT="
 	 echo "NEXT_TCP_PORT=$_v"
-	) > ${portdb_path}/meta
+	) > $(portdb_path)/meta
     else
-	(cat ${portdb_path}/meta.tmp |grep -v "NEXT_HTTP_PORT="
+	(cat $(portdb_path)/meta.tmp |grep -v "NEXT_HTTP_PORT="
 	 echo "NEXT_HTTP_PORT=$_v"
-	) >${portdb_path}/meta
+	) >$(portdb_path)/meta
     fi
 
-    rm ${portdb_path}/meta.tmp
+    rm $(portdb_path)/meta.tmp
 }
 
 get_match_entry() {
@@ -161,7 +166,7 @@ get_http_alloc() {
 
     _n="$1"
     _host="$2"
-    _db=${portdb_path}/httpdb
+    _db=$(portdb_path)/httpdb
 
     _e=$(get_match_db_entry "$_db" "$_n" "$_h")
     if [ -z "$_e" ]; then
@@ -171,7 +176,7 @@ get_http_alloc() {
 	    _v=$(get_next_port http)
 	    _e="${_n}${_v},${_v},${_n}:${_h}"
 	    # update db
-	    echo "$_e" >> ${portdb_path}/httpdb
+	    echo "$_e" >> $(portdb_path)/httpdb
 	    update_next_port http $(expr ${_v} + 1)
 	else
 	    # use existed entry
@@ -193,14 +198,14 @@ get_tcp_alloc() {
 
     _n="$1"
     _h="$2"
-    _db=${portdb_path}/tcpdb
+    _db=$(portdb_path)/tcpdb
 
     _e=$(get_match_db_entry "$_db" "$_n" "$_h")
     if [ -z "$_e" ]; then
 	# no entry found
 	_v=$(get_next_port tcp)
 	_e="${_n}${_v},${_v},${_n}:${_h}"
-	echo "$_e" >> ${portdb_path}/tcpdb
+	echo "$_e" >> $(portdb_path)/tcpdb
 	update_next_port tcp $(expr ${_v} + 1)
     fi
 
@@ -228,7 +233,7 @@ get_all_entrypoints() {
 
     _dbs=""
     for _it in httpdb tcpdb; do
-	_db=${portdb_path}/$_it
+	_db=$(portdb_path)/$_it
 	
 	if [ -f "$_db" ]; then
 	    _dbs="$_dbs $_db"

@@ -186,7 +186,7 @@ get_my_ip() {
 		_maxif=20
 		;;
 	    *)
-		_maxif=0
+		_maxif=10
 		;;
 	esac
 
