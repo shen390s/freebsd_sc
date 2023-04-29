@@ -127,8 +127,8 @@ job_mk_port_maps() {
     printf "\t\tport_map = {\n"
     for _it in $(get_config "${_r}.services"); do
 	_sn=$(echo $_it|awk -F: '{print $1}')
-	_pt=$(echo $_it|awk -F: '{print $2}')
-	printf "\t\t\t%s = \"%s\"\n" ${_sn} $(get_port "$_pt" "$_sn" "$_r")
+	_pt=$(echo $_it|awk -F: '{print $3}')
+	printf "\t\t\t%s = \"%s\"\n" ${_sn} $_pt
     done
     printf "\t\t}\n"
 }

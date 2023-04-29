@@ -1,6 +1,6 @@
 services="sshd ttyd"
 users="rshen ann apple"
-login_port=2022
+login_port=22
 ttyd_port=7681
 
 valueOf_login_ssh_port() {
@@ -9,6 +9,13 @@ valueOf_login_ssh_port() {
 
 valueOf_login_ttyd_port() {
     echo ${ttyd_port}
+}
+
+valueOf_login_services() {
+    cat <<EOF
+login:tcp:${login_port}:10s:60s
+ttyd:http:${ttyd_port}:10s:60s
+EOF
 }
 
 role_login_install() {
@@ -23,13 +30,13 @@ role_login_install() {
 
 role_login_config() {
     # need to register exclusive tcp port
-    register_port "login" 
+    # register_port "login" 
 #    register_port "ttyd" 7681
     svc_config ttyd
     # config users
 }
 
-role_login_config() {
+role_login_start() {
     svc_start sshd
     svc_start ttyd
 

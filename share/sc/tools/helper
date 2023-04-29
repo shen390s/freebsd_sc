@@ -73,6 +73,8 @@ fi
 
 if [ "x$(fn_defined role_${role}_${action})" = "xyes" ]; then
     eval "role_${role}_${action} $@"
+else
+    echo "WARN: no action ${action} defined for role ${role}"
 fi
 
 # Local Variables:

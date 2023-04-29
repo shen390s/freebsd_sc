@@ -18,7 +18,11 @@ svc_generic() {
     if [ "x$(fn_defined ${_s}_${_action})" = "xyes" ]; then
 	svc_call "$_s" "$_action" "$@"
     else
-	echo
+	if [ "x${_action}" = "xpkgs" ]; then
+	    echo "${_s}"
+	else
+	    echo
+	fi
     fi
 }
 
