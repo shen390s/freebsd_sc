@@ -1,15 +1,17 @@
+gitea_port=$(get_port http gitea gitea)
+giteassh_port=$(get_port tcp giteassh gitea)
 valueOf_gitea_port() {
-    echo $(get_port "http")
+    echo ${gitea_port}
 }
 
 valueOf_gitea_ssh_port() {
-    echo $(get_port "giteassh")
+    echo ${giteassh_port}
 }
 
 valueOf_gitea_services() {
     cat <<EOF
-giteassh:tcp:$(get_config "gitea.ssh.port"):10s:20s
-gitea:http:$(get_config "gitea.port"):10s:20s
+giteassh:tcp:${giteassh_port}:10s:20s
+gitea:http:${gitea_port}:10s:20s
 EOF
 }
 
@@ -22,14 +24,13 @@ role_gitea_install() {
 
 role_gitea_config() {
     svc_config gitea
+    svc_config sshd "$(get_config gitea.ssh.port)"
 }
 
 role_gitea_start() {
+    role_gitea_config
     svc_start sshd
-    run_command su git -c "GITEA_CUSTOM=/mnt/sc/data/gitea GITEA_WORK_DIR=/usr/local/share/gitea gitea web"
-    while : ; do
-	  sleep 100
-    done
+    su git -c "GITEA_CUSTOM=/mnt/sc/conf/gitea GITEA_WORK_DIR=/usr/local/share/gitea gitea web"
 }
 # Local Variables:
 # mode: sh

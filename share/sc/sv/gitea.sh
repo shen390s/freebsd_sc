@@ -12,8 +12,18 @@ gitea_mkdirs() {
     fi
 
     for _it in data conf data/tmp/uploads gitea-repositories data/avatars indexers data/home; do
-	run_command mkdir -p $_d/$_it
+	if [ ! -d $_d/$it ]; then
+	    run_command mkdir -p $_d/$_it
+	fi
 	run_command chown -Rf git:git $_d/$_it
+    done
+
+    for _it in /var/log/gitea; do
+	if [ ! -d $_it ]; then
+	    mkdir -p $_it
+	fi
+
+	chown -Rf git:git $_it
     done
 }
 
@@ -66,7 +76,8 @@ gitea_mk_app_ini() {
 
 gitea_config() {
     gitea_mkdirs
-    gitea_mk_app_ini ${conf_mountpoint}/gitea/app.ini  
+    gitea_mk_git_home
+    gitea_mk_app_ini ${conf_mountpoint}/gitea/conf/app.ini  
 }
 
 gitea_enable() {
