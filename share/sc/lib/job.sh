@@ -162,7 +162,7 @@ job_render() {
     _pn="$_job"
     _pt="1.0"
     _psc="$sc_mountpoint/share/sc/tools/helper"
-    _psa="\"start\",\"${_role}\""
+    _psa="\"-f\",\"/var/tmp/sc.conf\",\"start\",\"${_role}\""
     _ppm=$(job_mk_port_maps "$_role")
     _pnm=$(get_config "${_role}.network")
     case "${_pnm}" in

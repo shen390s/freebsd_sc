@@ -22,6 +22,8 @@ role_login_install() {
     svc_install ttyd
     svc_config sshd "$(get_config login.ssh.port)"
     svc_config ttyd "$(get_config login.ttyd.port)"
+#    create_users login $users
+    
     svc_enable sshd
     svc_enable ttyd
     svc_start sshd
@@ -34,9 +36,12 @@ role_login_config() {
 #    register_port "ttyd" 7681
     svc_config ttyd
     # config users
+#    config_users login $users
 }
 
 role_login_start() {
+    create_users login $users
+    config_users login $users
     svc_start sshd
     svc_start ttyd
 
