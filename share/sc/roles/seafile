@@ -1,1 +1,82 @@
-services="seafile seahub"
+seafile_port=$(get_port http seafile seafile)
+seahub_port=$(get_port http seahub seafile)
+
+seafile_cnf_dir="$conf_mountpoint/seafile"
+seafile_data_dir="$data_mountpoint/seafile"
+seafile_pass="aaa123"
+seafile_dbpass="aaa123"
+
+valueOf_seafile_port() {
+    echo $seafile_port
+}
+
+valueOf_seahub_port() {
+    echo $seahub_port
+}
+
+valueOf_seafile_services() {
+    cat <<EOF
+seafile:http:${seafile_port}:10s:20s
+seahub:http:${seahub_port}:10s:20s
+EOF
+}
+
+valueOf_seafile_dbpass() {
+    echo $seafile_dbpass
+}
+
+valueOf_seafile_pass() {
+    echo $seafile_pass
+}
+
+fix_reset_admin() {
+    local _s _d1 _d2
+
+    _d1="$(get_role_conf_dir seafile)"
+    _d2=$(get_role_data_dir seafile)
+    _f="/usr/local/www/haiwen/seafile-server/reset-admin.sh"
+    _s="-e 's@^default_ccnet_conf_dir=.*@default_ccnet_conf_dir=$_d1/ccnet@g'"
+    _s="$_s -e 's@^default_seafile_data_dir=.*@default_seafile_data_dir=$_d2/data@g'"
+    _s="$_s -e 's@^central_config_dir=.*@central_config_dir=$_d1/conf@g'"
+    run_command "sed -E  $_s -i .bak $_f"
+}
+
+role_seafile_install() {
+    svc_install mysql
+    svc_install seafile
+    svc_install seahub 
+
+    fix_reset_admin
+}
+
+role_seafile_svc_start() {
+    svc_start mysql seafile
+    svc_start seafile
+    svc_start seahub
+}
+
+role_seafile_config() {
+    mysql_config seafile
+    seafile_config 
+    seahub_config 
+
+    role_seafile_svc_start
+    
+    run_command /usr/local/www/haiwen/seafile-server/reset-admin.sh
+}
+
+
+role_seafile_start() {
+    set -x
+
+    role_seafile_svc_start
+    
+    while :;  do
+	  sleep 100
+    done
+}
+
+# Local Variables:
+# mode: sh
+# End:
+

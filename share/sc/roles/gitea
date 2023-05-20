@@ -30,7 +30,7 @@ role_gitea_config() {
 role_gitea_start() {
     role_gitea_config
     svc_start sshd
-    su git -c "GITEA_CUSTOM=/mnt/sc/conf/gitea GITEA_WORK_DIR=/usr/local/share/gitea gitea web"
+    su git -c "GITEA_CUSTOM=$conf_mountpoint/gitea GITEA_WORK_DIR=/usr/local/share/gitea gitea web"
 }
 # Local Variables:
 # mode: sh

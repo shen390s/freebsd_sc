@@ -33,6 +33,12 @@ build_image() {
     run_command pot mount-in -p "$_name" \
 		-m $sc_mountpoint \
 		-d $TOP
+    run_command pot mount-in -p "$_name" \
+		-d $conf_mountpoint \
+		-m $conf_mountpoint
+    run_command pot mount-in -p "$_name" \
+		-d $data_mountpoint \
+		-m $data_mountpoint
     
     if ! start_pot "$_name"; then
 	echo "start pot $_name failed"
@@ -124,6 +130,9 @@ config_image()
     run_command pot start -p "$_i"
 
     run_helper "$_i" config "$_i"    
+
+    # stop the pot
+    run_command pot stop -p "$_i"
 }
 
 deploy_image() {

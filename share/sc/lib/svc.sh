@@ -88,9 +88,9 @@ svc_start() {
     shift
 
     if [ "x$(fn_defined ${_s}_start)" = "xyes" ]; then
-	svc_call "$_s" "start"
+	svc_call "$_s" "start" "$@"
     else
-	run_command service "$_s" start
+	run_command service "$_s" start "$@"
     fi
 }
 
@@ -112,6 +112,6 @@ svc_restart() {
     _s="$1"
     shift
 
-    svc_stop "$_s"  && \
-	svc_start "$_s"
+    svc_stop "$_s" "$@" && \
+	svc_start "$_s" "$@"
 }
