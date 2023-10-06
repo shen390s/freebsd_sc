@@ -1,50 +1,32 @@
-gen_kv_awk() {
-    local _it _k _var _v _z _s _df
+do_render() {
+    local _src _c _k _v _it _render
 
-    _df=$(mktemp)
-    cat <<EOF
-BEGIN {
-  RS=""
-}
-{
-$(for _it in $*; do
-      _k=$(echo $_it |awk -F: '{print $1}')
-      _var=$(echo $_it |awk -F: '{print $2}')
-      echo "BEGIN_${_k}" >>${_df}
-      value_of_var "${_var}" | uuencode -m - >>${_df}
-      echo "END_${_k}" >>${_df}
-      echo "s=\"cat ${_df} | sed -n -e '/BEGIN_${_k}/,/END_${_k}/p' |grep -v '${_k}' | uudecode -m -o /dev/stdout\";"
-      echo "s | getline ENVIRON[\"${_k}\"];"
-done)
+    _src="$1"
+    shift
 
-split(\$0,a,"%%");
+    _c=""
+    for _it in $*; do
+        _k=$(echo "$_it" |awk -F: '{print $1}')
+        _v=$(echo "$_it" |awk -F: '{print $2}')
+        _c="$_c $_k=\"\$$_v\""
+    done
 
-for (idx=1; idx <= length(a); idx ++) {
-    if (idx % 2 != 0) {
-       printf("%s", a[idx]);
-    }
-    else {
-       printf("%s", ENVIRON[a[idx]]);
-    }
-}
-printf("\n");
-$(echo "s=\"rm -Rf ${_df}\";")
-system(s);
-}
-EOF
+    _render="$TOP/share/sc/tools/tfrender"
+    if [ ! -x $_render ]; then
+        (cd $TOP/share/sc/src && \
+             make && \
+             cp tfrender $_render)
+    fi
+    eval "$_c $TOP/share/sc/tools/tfrender $_src"
 }
 
 fill_kv_file() {
-   local _fsrc _fdst _awk _dir _prog
+   local _fsrc _fdst _dir 
 
    _fsrc="$1"
    _fdst="$2"
    shift 2
 
-   _prog=$(mktemp)
-   gen_kv_awk "$@" >$_prog
-   # cat $_prog >&2
-   
    if [ "x${_fdst}" = "x-" ]; then
        :
    else
@@ -60,8 +42,7 @@ fill_kv_file() {
    fi
    
    save_command_output "$_fdst" \
-		       eval "cat $_fsrc |awk -f $_prog"
-   rm -Rf $_prog
+		       do_render "$_fsrc" "$@"
 }
 
 mk_join_list() {
